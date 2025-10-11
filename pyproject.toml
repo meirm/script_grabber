@@ -1,23 +1,34 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
 name = "script-grabber"
 version = "0.1.4"
 description = "A job queue management system for distributed computing."
-authors = ["Meir Michanie <meirm@riunx.com>"]
-license = "MIT"
+authors = [{name = "Meir Michanie", email = "meirm@riunx.com"}]
+license = {text = "MIT"}
 readme = "README.md"
-packages = [{include = "script_grabber", from = "src"}]
+requires-python = ">=3.9"
+keywords = ["job-queue", "distributed-computing", "task-scheduler"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 
-[tool.poetry.scripts]
-# Register grabber.py as a CLI entry point
+[project.scripts]
 grabber = "script_grabber.grabber:main"
 
-[tool.poetry.dependencies]
-python = "^3.9"
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
 
-[tool.poetry.dev-dependencies]
-# You can add your development dependencies here, such as:
-pytest = "^7.0"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.hatch.build.targets.wheel]
+packages = ["src/script_grabber"]

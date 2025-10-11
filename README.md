@@ -3,6 +3,23 @@ ScriptGrabber is a Python script that implements a simple polling mechanism to g
 
 
 ## Getting started
+
+### Prerequisites
+Install uv (modern Python package manager):
+
+```bash
+# macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or via pip
+pip install uv
+```
+
+### Installation
+
 1. Clone the repository:
 
 ```bash
@@ -10,26 +27,29 @@ git clone https://github.com/meirm/script_grabber.git
 cd script_grabber
 ```
 
-2. Install the requirements:
+2. Build and install using uv:
 
 ```bash
-pip install -r requirements.txt
+# Build the project
+uv build
 
+# Install in development mode
+uv pip install -e .
+
+# Or install from PyPI
+uv pip install script-grabber
 ```
-3. Poetry build and install:
 
-```bash
-poetry build
-poetry install
-
-```
 You might need to change the clusterpath variable to point to the location of your data cluster, or change the poll_interval variable to control how often the script should poll for data.
 
-4. Run the script:
+3. Run the script:
 
 ```bash
-python grabber.py
+# Using the CLI entry point
+grabber <name> <cluster_path> [--job-timeout SECONDS]
 
+# Or run as a module
+uv run python -m script_grabber.grabber <name> <cluster_path>
 ```
 The script will start polling for data and writing it to a file in the data directory.
 ## Usage
