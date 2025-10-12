@@ -166,3 +166,108 @@ From `grabber.py:133-141`:
 4. No cleanup of stale lock files on abnormal termination
 5. Duplicate import of `time` module (lines 21, 30)
 6. `GrabError` exception defined twice (in both `grabber.py` and `grabexceptions.py`)
+
+## Testing
+
+### Test Suite Overview
+
+ScriptGrabber has a comprehensive test suite with 80%+ coverage:
+- **Unit tests**: Fast, isolated tests for individual components
+- **Integration tests**: Real file system operations and job lifecycle
+- **End-to-end tests**: Full distributed scenarios with multiple grabbers
+
+### Running Tests
+
+```bash
+# Install test dependencies
+uv pip install -e ".[dev]"
+
+# Run all tests
+uv run pytest -v
+
+# Run specific test categories
+uv run pytest -m unit -v           # Unit tests only
+uv run pytest -m integration -v    # Integration tests only
+uv run pytest -m e2e -v            # End-to-end tests only
+
+# Generate coverage report
+uv run pytest --cov=src/script_grabber --cov-report=term-missing
+uv run pytest --cov=src/script_grabber --cov-report=html
+
+# Run specific test file
+uv run pytest tests/unit/test_grabber.py -v
+
+# Run tests matching pattern
+uv run pytest -k "signal" -v      # All signal-related tests
+uv run pytest -k "multi_grabber" -v  # Multi-grabber tests
+```
+
+### Test File Organization
+
+```
+tests/
+├── conftest.py              # Shared fixtures and configuration
+├── fixtures/
+│   ├── __init__.py
+│   └── sample_jobs.py       # Sample job scripts for testing
+├── unit/
+│   ├── test_exceptions.py   # Exception hierarchy tests
+│   └── test_grabber.py      # Grabber class unit tests
+├── integration/
+│   ├── test_job_lifecycle.py    # Complete job lifecycle tests
+│   ├── test_signal_handling.py  # Signal handling tests
+│   ├── test_multi_grabber.py    # Multi-grabber scenarios
+│   └── test_edge_cases.py       # Edge cases and error conditions
+└── e2e/
+    └── test_distributed_scenario.py  # Full distributed tests
+```
+
+### Test Fixtures
+
+The test suite provides reusable fixtures in `tests/conftest.py`:
+- `temp_cluster_path`: Temporary cluster directory structure
+- `sample_grabber`: Pre-configured Grabber instance
+- `mock_job_success`: Job that exits with code 0
+- `mock_job_failure`: Job that exits with code 1
+- `mock_job_timeout`: Job that simulates timeout (exit 124)
+- `multiple_jobs`: Multiple jobs in common queue
+- `ctrl_queue_job`: Job in control queue
+
+### Writing New Tests
+
+When adding new tests:
+1. Use appropriate pytest markers (`@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.e2e`)
+2. Use existing fixtures from `conftest.py` when possible
+3. Follow naming convention: `test_<component>_<behavior>.py`
+4. Add docstrings explaining what is being tested
+5. Keep unit tests fast and isolated
+6. Use integration tests for file system operations
+7. Use e2e tests for full system scenarios
+
+### Debugging Failed Tests
+
+```bash
+# Run with verbose output
+uv run pytest -vv
+
+# Show print statements
+uv run pytest -s
+
+# Run specific test
+uv run pytest tests/unit/test_grabber.py::TestGrabberInitialization::test_init_with_required_params_only -v
+
+# Drop into debugger on failure
+uv run pytest --pdb
+
+# Show local variables on failure
+uv run pytest -l
+```
+
+### Known Issues Documented in Tests
+
+The test suite documents several known issues:
+1. **Line 150 bug**: `GrabLockError` raised but doesn't prevent execution (missing `raise` keyword)
+2. **Timeout not enforced**: `job_timeout` parameter exists but timeout never enforced
+3. **SIGUSR1 incomplete**: Status dump implementation incomplete
+
+These are tested to document current behavior and will need updates when bugs are fixed.

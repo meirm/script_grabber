@@ -72,6 +72,73 @@ To send a signal to a running instance of ScriptGrabber, use the kill command wi
 kill -SIGTERM 1234
 ```
 
+## Testing
+
+ScriptGrabber includes a comprehensive test suite covering unit tests, integration tests, and end-to-end tests.
+
+### Installing Test Dependencies
+
+```bash
+# Install package with development dependencies
+uv pip install -e ".[dev]"
+```
+
+### Running Tests
+
+```bash
+# Run all tests with verbose output
+uv run pytest -v
+
+# Run only unit tests (fast, isolated)
+uv run pytest -m unit -v
+
+# Run only integration tests
+uv run pytest -m integration -v
+
+# Run only end-to-end tests
+uv run pytest -m e2e -v
+
+# Run tests with coverage report
+uv run pytest --cov=src/script_grabber --cov-report=term-missing
+
+# Generate HTML coverage report
+uv run pytest --cov=src/script_grabber --cov-report=html
+# Open htmlcov/index.html in a browser
+
+# Run specific test file
+uv run pytest tests/unit/test_grabber.py -v
+
+# Run tests matching a pattern
+uv run pytest -k "signal" -v
+```
+
+### Test Organization
+
+- **Unit tests** (`tests/unit/`): Fast, isolated tests with no file system dependencies
+- **Integration tests** (`tests/integration/`): Tests with real file system operations
+- **End-to-end tests** (`tests/e2e/`): Full system tests with multiple processes
+
+### Test Markers
+
+Tests are marked with pytest markers for selective execution:
+- `@pytest.mark.unit`: Unit tests
+- `@pytest.mark.integration`: Integration tests
+- `@pytest.mark.e2e`: End-to-end tests
+- `@pytest.mark.slow`: Long-running tests
+
+### Running Tests During Development
+
+```bash
+# Quick feedback: run only unit tests
+uv run pytest -m unit
+
+# Before committing: run all tests
+uv run pytest
+
+# Check coverage: ensure ≥80% coverage
+uv run pytest --cov=src/script_grabber --cov-report=term-missing
+```
+
 ## License
 ScriptGrabber is released under the MIT License. See LICENSE for details.
 
