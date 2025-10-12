@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ScriptGrabber - Job Management</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #f5f7fa;
+        color: #2c3e50;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      header {
+        background: white;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      h1 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+      }
+
+      .cluster-status {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: #3498db;
+      }
+
+      .stat-label {
+        font-size: 0.9em;
+        color: #7f8c8d;
+        margin-top: 5px;
+      }
+
+      .upload-section {
+        background: white;
+        padding: 30px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .drop-zone {
+        border: 3px dashed #cbd5e0;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .drop-zone:hover, .drop-zone.dragover {
+        border-color: #3498db;
+        background: #ebf8ff;
+      }
+
+      .drop-zone input[type="file"] {
+        display: none;
+      }
+
+      button {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background 0.3s;
+      }
+
+      button:hover {
+        background: #2980b9;
+      }
+
+      button:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+      }
+
+      .jobs-section {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .jobs-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      .jobs-table th,
+      .jobs-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ecf0f1;
+      }
+
+      .jobs-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .jobs-table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+      }
+
+      .status-queued { background: #e3f2fd; color: #1976d2; }
+      .status-running { background: #fff3e0; color: #f57c00; }
+      .status-done { background: #e8f5e9; color: #388e3c; }
+      .status-failed { background: #ffebee; color: #d32f2f; }
+      .status-timeout { background: #fce4ec; color: #c2185b; }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
+      }
+
+      .error {
+        background: #ffebee;
+        color: #d32f2f;
+        padding: 15px;
+        border-radius: 6px;
+        margin: 15px 0;
+      }
+
+      .success {
+        background: #e8f5e9;
+        color: #388e3c;
+        padding: 15px;
+        border-radius: 6px;
+        margin: 15px 0;
+      }
+
+      .filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .filters select {
+        padding: 8px 12px;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 1em;
+      }
+
+      .refresh-btn {
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🚀 ScriptGrabber</h1>
+        <p>Distributed Python Script Execution</p>
+
+        <div class="cluster-status" id="cluster-status">
+          <div class="loading">Loading cluster status...</div>
+        </div>
+      </header>
+
+      <div class="upload-section">
+        <h2>Submit Job</h2>
+        <div class="drop-zone" id="drop-zone">
+          <p>📁 Drag & drop a Python file here or click to browse</p>
+          <p style="font-size: 0.9em; color: #7f8c8d; margin-top: 10px;">Only .py files are accepted (max 10MB)</p>
+          <input type="file" id="file-input" accept=".py" />
+        </div>
+        <div id="upload-status"></div>
+      </div>
+
+      <div class="jobs-section">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <h2>Jobs</h2>
+          <button class="refresh-btn" id="refresh-btn">🔄 Refresh</button>
+        </div>
+
+        <div class="filters">
+          <select id="status-filter">
+            <option value="">All Status</option>
+            <option value="queued">Queued</option>
+            <option value="running">Running</option>
+            <option value="done">Done</option>
+            <option value="failed">Failed</option>
+            <option value="timeout">Timeout</option>
+          </select>
+        </div>
+
+        <div id="jobs-list">
+          <div class="loading">Loading jobs...</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
