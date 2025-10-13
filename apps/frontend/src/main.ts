@@ -18,6 +18,8 @@ async function init() {
   setupFileUpload();
   setupFilters();
   setupRefreshButton();
+  setupJobDetailsHandlers();
+  setupBackButton();
 
   // Initial load
   await Promise.all([
@@ -138,6 +140,33 @@ function setupRefreshButton() {
 }
 
 /**
+ * Setup job details handlers using event delegation
+ */
+function setupJobDetailsHandlers() {
+  const jobsList = document.getElementById('jobs-list')!;
+
+  jobsList.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    // Check if clicked element is a view details button
+    if (target.tagName === 'BUTTON' && target.id.startsWith('view-')) {
+      const jobId = target.id.replace('view-', '').replace('card-', '');
+      navigateToJobDetails(jobId);
+    }
+  });
+}
+
+/**
+ * Setup back button handler
+ */
+function setupBackButton() {
+  const backBtn = document.getElementById('back-btn')!;
+  backBtn.addEventListener('click', () => {
+    navigateToMainView();
+  });
+}
+
+/**
  * Refresh cluster status
  */
 async function refreshClusterStatus() {
@@ -206,15 +235,12 @@ async function refreshJobList() {
           ${response.jobs.map(job => renderJobRow(job)).join('')}
         </tbody>
       </table>
+      <div class="jobs-cards">
+        ${response.jobs.map(job => renderJobCard(job)).join('')}
+      </div>
     `;
 
-    // Setup view details buttons
-    response.jobs.forEach(job => {
-      const btn = document.getElementById(`view-${job.job_id}`);
-      if (btn) {
-        btn.addEventListener('click', () => viewJobDetails(job.job_id));
-      }
-    });
+    // Event listeners are handled by event delegation in setupJobDetailsHandlers()
 
   } catch (error) {
     jobsDiv.innerHTML = '<div class="error">Failed to load jobs</div>';
@@ -222,7 +248,7 @@ async function refreshJobList() {
 }
 
 /**
- * Render a job row
+ * Render a job row (desktop table view)
  */
 function renderJobRow(job: JobListItem): string {
   const submittedDate = job.submitted_at
@@ -245,32 +271,149 @@ function renderJobRow(job: JobListItem): string {
 }
 
 /**
- * View job details
+ * Render a job card (mobile card view)
  */
-async function viewJobDetails(jobId: string) {
+function renderJobCard(job: JobListItem): string {
+  const submittedDate = job.submitted_at
+    ? new Date(job.submitted_at).toLocaleString()
+    : 'N/A';
+
+  return `
+    <div class="job-card">
+      <div class="job-card-header">
+        <div class="job-card-id">${job.job_id}</div>
+      </div>
+      <div class="job-card-body">
+        <div class="job-card-field">
+          <span class="job-card-label">Status:</span>
+          <span class="job-card-value">
+            <span class="status-badge status-${job.status}">${job.status}</span>
+          </span>
+        </div>
+        <div class="job-card-field">
+          <span class="job-card-label">Grabber:</span>
+          <span class="job-card-value">${job.grabber || '-'}</span>
+        </div>
+        <div class="job-card-field">
+          <span class="job-card-label">Submitted:</span>
+          <span class="job-card-value">${submittedDate}</span>
+        </div>
+      </div>
+      <div class="job-card-actions">
+        <button id="view-card-${job.job_id}">View Details</button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Navigate to job details view
+ */
+async function navigateToJobDetails(jobId: string) {
+  const mainView = document.getElementById('main-view')!;
+  const detailsView = document.getElementById('details-view')!;
+  const detailsContent = document.getElementById('job-details-content')!;
+
+  // Show details view, hide main view
+  mainView.style.display = 'none';
+  detailsView.style.display = 'block';
+
+  // Stop auto-refresh when viewing details
+  stopAutoRefresh();
+
+  // Scroll to top
+  window.scrollTo(0, 0);
+
+  // Load job details
+  detailsContent.innerHTML = '<div class="loading">Loading job details...</div>';
+
   try {
     const job = await api.getJobStatus(jobId);
-
-    const details = `
-Job ID: ${job.job_id}
-Status: ${job.status}
-Grabber: ${job.grabber || 'N/A'}
-Submitted: ${job.submitted_at ? new Date(job.submitted_at).toLocaleString() : 'N/A'}
-Completed: ${job.completed_at ? new Date(job.completed_at).toLocaleString() : 'N/A'}
-Exit Code: ${job.exit_code !== null ? job.exit_code : 'N/A'}
-
---- STDOUT ---
-${job.stdout || '(empty)'}
-
---- STDERR ---
-${job.stderr || '(empty)'}
-    `;
-
-    alert(details);
-
+    renderJobDetails(job);
   } catch (error: any) {
-    alert(`Failed to load job details: ${error.message}`);
+    detailsContent.innerHTML = `<div class="error">Failed to load job details: ${error.message}</div>`;
   }
+}
+
+/**
+ * Navigate back to main view
+ */
+function navigateToMainView() {
+  const mainView = document.getElementById('main-view')!;
+  const detailsView = document.getElementById('details-view')!;
+
+  // Show main view, hide details view
+  mainView.style.display = 'block';
+  detailsView.style.display = 'none';
+
+  // Restart auto-refresh
+  startAutoRefresh();
+
+  // Scroll to top
+  window.scrollTo(0, 0);
+
+  // Refresh job list
+  refreshJobList();
+}
+
+/**
+ * Render job details page
+ */
+function renderJobDetails(job: any) {
+  const detailsContent = document.getElementById('job-details-content')!;
+
+  const submittedDate = job.submitted_at
+    ? new Date(job.submitted_at).toLocaleString()
+    : 'N/A';
+
+  const completedDate = job.completed_at
+    ? new Date(job.completed_at).toLocaleString()
+    : 'N/A';
+
+  detailsContent.innerHTML = `
+    <div class="detail-card">
+      <div class="detail-row">
+        <div class="detail-label">Job ID</div>
+        <div class="detail-value"><code>${job.job_id}</code></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Status</div>
+        <div class="detail-value">
+          <span class="status-badge status-${job.status}">${job.status}</span>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Grabber</div>
+        <div class="detail-value">${job.grabber || 'N/A'}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Submitted At</div>
+        <div class="detail-value">${submittedDate}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Completed At</div>
+        <div class="detail-value">${completedDate}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Exit Code</div>
+        <div class="detail-value">${job.exit_code !== null ? job.exit_code : 'N/A'}</div>
+      </div>
+    </div>
+
+    <div class="output-section">
+      <h3>Standard Output (stdout)</h3>
+      <div class="output-box ${!job.stdout ? 'empty' : ''}">
+${job.stdout || '(empty)'}
+      </div>
+    </div>
+
+    <div class="output-section">
+      <h3>Standard Error (stderr)</h3>
+      <div class="output-box ${!job.stderr ? 'empty' : ''}">
+${job.stderr || '(empty)'}
+      </div>
+    </div>
+  `;
 }
 
 /**

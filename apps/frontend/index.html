@@ -188,13 +188,309 @@
         font-size: 1em;
       }
 
+      .jobs-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
       .refresh-btn {
         margin-left: auto;
+      }
+
+      /* Base styles for responsive layouts */
+      .jobs-cards {
+        display: none;
+      }
+
+      .jobs-table {
+        display: table;
+      }
+
+      /* Mobile responsive styles */
+      @media (max-width: 768px) {
+        .container {
+          padding: 10px;
+        }
+
+        header {
+          padding: 15px;
+          margin-bottom: 15px;
+        }
+
+        h1 {
+          font-size: 1.5em;
+        }
+
+        h2 {
+          font-size: 1.2em;
+        }
+
+        .cluster-status {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+
+        .stat-card {
+          padding: 10px;
+        }
+
+        .stat-value {
+          font-size: 1.5em;
+        }
+
+        .stat-label {
+          font-size: 0.8em;
+        }
+
+        .upload-section {
+          padding: 15px;
+          margin-bottom: 15px;
+        }
+
+        .drop-zone {
+          padding: 20px;
+        }
+
+        .jobs-section {
+          padding: 15px;
+        }
+
+        .jobs-header {
+          flex-direction: column;
+          align-items: stretch;
+          margin-bottom: 15px;
+        }
+
+        .jobs-header h2 {
+          margin-bottom: 10px;
+        }
+
+        .filters {
+          flex-direction: column;
+        }
+
+        .filters select {
+          width: 100%;
+        }
+
+        .refresh-btn {
+          margin-left: 0;
+          margin-top: 10px;
+          width: 100%;
+        }
+
+        /* Hide table on mobile, use card layout instead */
+        .jobs-table {
+          display: none;
+        }
+
+        .jobs-cards {
+          display: block;
+        }
+
+        .job-card {
+          background: #f8f9fa;
+          border-radius: 8px;
+          padding: 15px;
+          margin-bottom: 15px;
+          border-left: 4px solid #3498db;
+        }
+
+        .job-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        }
+
+        .job-card-id {
+          font-family: monospace;
+          font-size: 0.85em;
+          word-break: break-all;
+          color: #2c3e50;
+          font-weight: 600;
+        }
+
+        .job-card-body {
+          display: grid;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+
+        .job-card-field {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.9em;
+        }
+
+        .job-card-label {
+          color: #7f8c8d;
+          font-weight: 600;
+        }
+
+        .job-card-value {
+          text-align: right;
+        }
+
+        .job-card-actions {
+          margin-top: 10px;
+        }
+
+        .job-card-actions button {
+          width: 100%;
+          padding: 10px;
+        }
+      }
+
+      /* Desktop: hide mobile card layout */
+      @media (min-width: 769px) {
+        .jobs-cards {
+          display: none;
+        }
+
+        .jobs-table {
+          display: table;
+        }
+      }
+
+      /* Tablet adjustments */
+      @media (min-width: 481px) and (max-width: 768px) {
+        .cluster-status {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      /* Job Details View Styles */
+      .details-section {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .details-header {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #ecf0f1;
+      }
+
+      #back-btn {
+        align-self: flex-start;
+        background: #95a5a6;
+        padding: 10px 20px;
+      }
+
+      #back-btn:hover {
+        background: #7f8c8d;
+      }
+
+      .detail-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .detail-row {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 15px;
+        padding: 12px 0;
+        border-bottom: 1px solid #e1e8ed;
+      }
+
+      .detail-row:last-child {
+        border-bottom: none;
+      }
+
+      .detail-label {
+        font-weight: 600;
+        color: #7f8c8d;
+      }
+
+      .detail-value {
+        color: #2c3e50;
+        word-break: break-word;
+      }
+
+      .detail-value code {
+        background: #e1e8ed;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .output-section {
+        margin-top: 30px;
+      }
+
+      .output-section h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+      }
+
+      .output-box {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 400px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+      }
+
+      .output-box.empty {
+        color: #95a5a6;
+        font-style: italic;
+      }
+
+      /* Mobile adjustments for details view */
+      @media (max-width: 768px) {
+        .details-section {
+          padding: 15px;
+        }
+
+        .details-header {
+          margin-bottom: 20px;
+          padding-bottom: 15px;
+        }
+
+        .detail-row {
+          grid-template-columns: 1fr;
+          gap: 5px;
+          padding: 10px 0;
+        }
+
+        .detail-label {
+          font-size: 0.85em;
+        }
+
+        .output-box {
+          padding: 15px;
+          font-size: 0.85em;
+          max-height: 300px;
+        }
+
+        #back-btn {
+          width: 100%;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
+    <!-- Main View -->
+    <div id="main-view" class="container">
       <header>
         <h1>🚀 ScriptGrabber</h1>
         <p>Distributed Python Script Execution</p>
@@ -215,7 +511,7 @@
       </div>
 
       <div class="jobs-section">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <div class="jobs-header">
           <h2>Jobs</h2>
           <button class="refresh-btn" id="refresh-btn">🔄 Refresh</button>
         </div>
@@ -233,6 +529,19 @@
 
         <div id="jobs-list">
           <div class="loading">Loading jobs...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Details View -->
+    <div id="details-view" class="container" style="display: none;">
+      <div class="details-section">
+        <div class="details-header">
+          <button id="back-btn">← Back to Jobs</button>
+          <h2>Job Details</h2>
+        </div>
+        <div id="job-details-content">
+          <div class="loading">Loading job details...</div>
         </div>
       </div>
     </div>

@@ -271,3 +271,4 @@ The test suite documents several known issues:
 3. **SIGUSR1 incomplete**: Status dump implementation incomplete
 
 These are tested to document current behavior and will need updates when bugs are fixed.
+- do not use alerts or modals in the frontend.
