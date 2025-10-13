@@ -49,3 +49,11 @@ class JobListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class JobRerunResponse(BaseModel):
+    """Response for job rerun request."""
+    new_job_id: str
+    original_job_id: str
+    status: str
+    message: str

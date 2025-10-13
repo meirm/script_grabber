@@ -109,6 +109,20 @@
         cursor: not-allowed;
       }
 
+      .rerun-btn {
+        background: #f39c12;
+        color: white;
+      }
+
+      .rerun-btn:hover:not(:disabled) {
+        background: #e67e22;
+      }
+
+      .rerun-btn:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+      }
+
       .jobs-section {
         background: white;
         padding: 30px;
@@ -173,6 +187,18 @@
         padding: 15px;
         border-radius: 6px;
         margin: 15px 0;
+      }
+
+      .info {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 15px;
+        border-radius: 6px;
+        margin: 15px 0;
+      }
+
+      .rerun-message {
+        margin-top: 20px;
       }
 
       .filters {
@@ -378,8 +404,13 @@
         border-bottom: 2px solid #ecf0f1;
       }
 
+      .details-header-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
       #back-btn {
-        align-self: flex-start;
         background: #95a5a6;
         padding: 10px 20px;
       }
@@ -484,6 +515,25 @@
 
         #back-btn {
           width: 100%;
+        }
+
+        .details-header-buttons {
+          flex-direction: column;
+        }
+
+        .details-header-buttons button {
+          width: 100%;
+        }
+
+        .job-card-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        .job-card-actions button {
+          flex: 1;
+          padding: 8px;
+          font-size: 0.9em;
         }
       }
     </style>

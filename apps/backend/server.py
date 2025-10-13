@@ -15,7 +15,8 @@ from core.models import (
     JobSubmitResponse,
     JobStatus,
     ClusterStatus,
-    JobListResponse
+    JobListResponse,
+    JobRerunResponse
 )
 
 # Load environment variables
@@ -193,6 +194,41 @@ async def get_cluster_status():
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get cluster status: {str(e)}"
+        )
+
+
+@app.post("/api/jobs/{job_id}/rerun", response_model=JobRerunResponse)
+async def rerun_job(job_id: str):
+    """Rerun an existing job by retrieving its script and resubmitting.
+
+    Args:
+        job_id: Job identifier to rerun
+
+    Returns:
+        JobRerunResponse with new job ID and status
+    """
+    try:
+        new_job_id, original_filename = await job_manager.rerun_job(job_id)
+        return JobRerunResponse(
+            new_job_id=new_job_id,
+            original_job_id=job_id,
+            status="queued",
+            message=f"Job rerun successfully. New job ID: {new_job_id}"
+        )
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to rerun job: {str(e)}"
         )
 
 

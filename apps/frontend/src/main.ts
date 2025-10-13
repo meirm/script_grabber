@@ -19,6 +19,7 @@ async function init() {
   setupFilters();
   setupRefreshButton();
   setupJobDetailsHandlers();
+  setupRerunHandlers();
   setupBackButton();
 
   // Initial load
@@ -157,6 +158,89 @@ function setupJobDetailsHandlers() {
 }
 
 /**
+ * Setup rerun handlers using event delegation
+ */
+function setupRerunHandlers() {
+  // Handler for rerun buttons in job list
+  const jobsList = document.getElementById('jobs-list')!;
+  jobsList.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    // Check if clicked element is a rerun button
+    if (target.tagName === 'BUTTON' && target.id.startsWith('rerun-')) {
+      const jobId = target.id.replace('rerun-', '').replace('card-', '');
+      handleJobRerun(jobId);
+    }
+  });
+
+  // Handler for rerun button in details view
+  const detailsContent = document.getElementById('job-details-content')!;
+  detailsContent.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    // Check if clicked element is the details rerun button
+    if (target.id === 'rerun-details-btn') {
+      const jobId = target.getAttribute('data-job-id');
+      if (jobId) {
+        handleJobRerun(jobId);
+      }
+    }
+  });
+}
+
+/**
+ * Handle job rerun
+ */
+async function handleJobRerun(jobId: string) {
+  // Show confirmation dialog
+  const confirmed = confirm(`Are you sure you want to rerun job "${jobId}"?`);
+  if (!confirmed) {
+    return;
+  }
+
+  const rerunMessageDiv = document.getElementById('rerun-message');
+
+  try {
+    // Show loading message
+    if (rerunMessageDiv) {
+      showMessage(rerunMessageDiv, 'info', 'Rerunning job...');
+    }
+
+    const response = await api.rerunJob(jobId);
+
+    // Show success message
+    if (rerunMessageDiv) {
+      showMessage(
+        rerunMessageDiv,
+        'success',
+        `${response.message} Click <a href="#" id="view-new-job" style="color: inherit; text-decoration: underline;">here</a> to view the new job.`
+      );
+
+      // Add click handler for the link
+      const viewNewJobLink = document.getElementById('view-new-job');
+      if (viewNewJobLink) {
+        viewNewJobLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          navigateToJobDetails(response.new_job_id);
+        });
+      }
+    }
+
+    // Refresh cluster status and job list
+    await Promise.all([
+      refreshClusterStatus(),
+      refreshJobList(),
+    ]);
+
+  } catch (error: any) {
+    const message = error.response?.data?.detail || error.message || 'Rerun failed';
+    if (rerunMessageDiv) {
+      showMessage(rerunMessageDiv, 'error', message);
+    }
+  }
+}
+
+/**
  * Setup back button handler
  */
 function setupBackButton() {
@@ -255,6 +339,12 @@ function renderJobRow(job: JobListItem): string {
     ? new Date(job.submitted_at).toLocaleString()
     : 'N/A';
 
+  // Show rerun button for terminal states
+  const showRerunButton = ['done', 'failed', 'timeout'].includes(job.status);
+  const rerunButtonHtml = showRerunButton
+    ? `<button id="rerun-${job.job_id}" class="rerun-btn" style="padding: 6px 12px; font-size: 0.9em; margin-left: 8px;">🔄</button>`
+    : '';
+
   return `
     <tr>
       <td><code>${job.job_id}</code></td>
@@ -265,6 +355,7 @@ function renderJobRow(job: JobListItem): string {
         <button id="view-${job.job_id}" style="padding: 6px 12px; font-size: 0.9em;">
           View Details
         </button>
+        ${rerunButtonHtml}
       </td>
     </tr>
   `;
@@ -277,6 +368,12 @@ function renderJobCard(job: JobListItem): string {
   const submittedDate = job.submitted_at
     ? new Date(job.submitted_at).toLocaleString()
     : 'N/A';
+
+  // Show rerun button for terminal states
+  const showRerunButton = ['done', 'failed', 'timeout'].includes(job.status);
+  const rerunButtonHtml = showRerunButton
+    ? `<button id="rerun-card-${job.job_id}" class="rerun-btn">🔄 Rerun</button>`
+    : '';
 
   return `
     <div class="job-card">
@@ -301,6 +398,7 @@ function renderJobCard(job: JobListItem): string {
       </div>
       <div class="job-card-actions">
         <button id="view-card-${job.job_id}">View Details</button>
+        ${rerunButtonHtml}
       </div>
     </div>
   `;
@@ -370,7 +468,19 @@ function renderJobDetails(job: any) {
     ? new Date(job.completed_at).toLocaleString()
     : 'N/A';
 
+  // Show rerun button for terminal states (done, failed, timeout)
+  const showRerunButton = ['done', 'failed', 'timeout'].includes(job.status);
+  const rerunButtonHtml = showRerunButton
+    ? `<button id="rerun-details-btn" class="rerun-btn" data-job-id="${job.job_id}">🔄 Rerun Job</button>`
+    : '';
+
   detailsContent.innerHTML = `
+    <div class="details-header-buttons">
+      ${rerunButtonHtml}
+    </div>
+
+    <div id="rerun-message" class="rerun-message"></div>
+
     <div class="detail-card">
       <div class="detail-row">
         <div class="detail-label">Job ID</div>
