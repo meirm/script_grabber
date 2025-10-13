@@ -8,6 +8,7 @@ import type {
   JobStatus,
   ClusterStatus,
   JobListResponse,
+  JobRerunResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -70,6 +71,16 @@ export const api = {
    */
   async health(): Promise<{ status: string }> {
     const response = await axios.get(`${API_BASE}/health`);
+    return response.data;
+  },
+
+  /**
+   * Rerun an existing job
+   */
+  async rerunJob(jobId: string): Promise<JobRerunResponse> {
+    const response = await axios.post<JobRerunResponse>(
+      `${API_BASE}/jobs/${jobId}/rerun`
+    );
     return response.data;
   },
 };

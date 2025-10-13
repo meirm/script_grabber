@@ -254,3 +254,55 @@ class JobManager:
         paginated_jobs = all_jobs[start_idx:end_idx]
 
         return paginated_jobs, total
+
+    async def rerun_job(self, job_id: str) -> tuple[str, str]:
+        """Rerun an existing job by retrieving its script and resubmitting.
+
+        Args:
+            job_id: Original job identifier
+
+        Returns:
+            Tuple of (new_job_id, original_filename)
+
+        Raises:
+            FileNotFoundError: If job file cannot be found
+            ValueError: If job_id is invalid
+        """
+        # Sanitize job_id to prevent path traversal
+        if '..' in job_id or '/' in job_id or '\\' in job_id:
+            raise ValueError(f"Invalid job_id: {job_id}")
+
+        # Search for the job file in spool directories
+        job_file_path = None
+
+        if self.spool_path.exists():
+            for grabber_spool in self.spool_path.glob("*"):
+                if not grabber_spool.is_dir():
+                    continue
+
+                # Search for job with any terminal status suffix
+                for status_suffix in ["-DONE", "-FAILED", "-TIMEOUT", "-RUNNING"]:
+                    # Try to find files matching the pattern
+                    matching_files = list(grabber_spool.glob(f"*{job_id}*{status_suffix}"))
+                    if matching_files:
+                        job_file_path = matching_files[0]
+                        break
+
+                if job_file_path:
+                    break
+
+        if not job_file_path or not job_file_path.exists():
+            raise FileNotFoundError(f"Job file not found for job_id: {job_id}")
+
+        # Read the original script content
+        async with aiofiles.open(job_file_path, 'rb') as f:
+            content = await f.read()
+
+        # Extract original filename (remove timestamp and status suffix)
+        # Job files are named like: script.py_20240101_120000_123456-20240101120001-DONE
+        original_filename = job_id
+
+        # Submit as a new job
+        new_job_id = await self.submit_job(original_filename, content)
+
+        return new_job_id, original_filename

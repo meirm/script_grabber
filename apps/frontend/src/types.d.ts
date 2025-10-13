@@ -42,3 +42,10 @@ export interface JobListResponse {
   page: number;
   page_size: number;
 }
+
+export interface JobRerunResponse {
+  new_job_id: string;
+  original_job_id: string;
+  status: string;
+  message: string;
+}
