@@ -1,0 +1,26 @@
+[
+  {
+    "session_id": "e193ff27-f9af-476d-9dd7-6734d23eb92f",
+    "transcript_path": "/Users/meirm/.claude/projects/-Users-meirm-git-riunx-public-script-grabber/e193ff27-f9af-476d-9dd7-6734d23eb92f.jsonl",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git diff HEAD",
+      "description": "Check changes made for rerun feature"
+    }
+  },
+  {
+    "session_id": "e193ff27-f9af-476d-9dd7-6734d23eb92f",
+    "transcript_path": "/Users/meirm/.claude/projects/-Users-meirm-git-riunx-public-script-grabber/e193ff27-f9af-476d-9dd7-6734d23eb92f.jsonl",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git add -A",
+      "description": "Stage all changes for commit"
+    }
+  }
+]

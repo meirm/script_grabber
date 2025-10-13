@@ -107,3 +107,110 @@ The plan follows the exact format requested and provides detailed guidance for i
 2025-10-13 22:40:14 - INFO - plan_file_path: specs/add-task-rerun-feature.md
 2025-10-13 22:40:14 - INFO - 
 === Committing plan ===
+2025-10-13 22:40:31 - INFO - Created commit: sdlc_planner: feat: add task rerun feature specification
+2025-10-13 22:40:31 - INFO - 
+=== Implementing solution ===
+2025-10-13 22:40:33 - DEBUG - implement_template_request: {
+  "agent_name": "sdlc_implementor",
+  "slash_command": "/implement",
+  "args": [
+    "specs/add-task-rerun-feature.md"
+  ],
+  "adw_id": "55759736",
+  "model": "sonnet"
+}
+2025-10-13 22:47:14 - DEBUG - implement_response: {
+  "output": "Perfect! Let me create a final comprehensive summary:\n\n## Summary\n\nI have successfully implemented the task rerun feature for the ScriptGrabber project according to the specification in `specs/add-task-rerun-feature.md`.\n\n### Work Completed\n\n#### Core Implementation:\n\n1. **Exception Handling** (`src/script_grabber/grabexceptions.py` - 8 lines added):\n   - Added `GrabRerunError` for general rerun failures\n   - Added `GrabTaskNotFoundError` for missing task scenarios\n\n2. **Rerun Method** (`src/script_grabber/grabber.py` - 73 lines added):\n   - Implemented `rerun_task()` method in the Grabber class\n   - Searches spool directory for completed jobs (DONE/FAILED/TIMEOUT states)\n   - Uses temp directory for atomic file operations\n   - Supports rerunning to common or control queues\n   - Preserves original job files for audit trail\n   - Updated `ensure_dirs()` to create temp directory\n\n3. **CLI Interface** (`src/script_grabber/rerun.py` - 121 new lines):\n   - Created `grabber-rerun` command-line tool\n   - Supports arguments: grabber_name, cluster_path, job_name\n   - Optional `--queue-type` flag (common/control)\n   - User-friendly success/error messages\n   - Comprehensive logging to rerun.log\n\n4. **Package Configuration** (`pyproject.toml` - 1 line added):\n   - Registered `grabber-rerun` CLI entry point\n\n#### Testing:\n\n5. **Unit Tests** (`tests/unit/test_rerun.py` - 229 new lines):\n   - 10 comprehensive unit tests covering:\n     - Successful rerun for all job states (DONE, FAILED, TIMEOUT)\n     - Error handling for nonexistent jobs\n     - Temp directory creation\n     - Original job preservation\n     - Job name generation\n     - Most recent job selection\n     - Invalid queue type handling\n\n6. **Integration Tests** (`tests/integration/test_rerun_integration.py` - 386 new lines):\n   - 13 end-to-end integration tests covering:\n     - Complete rerun workflow with actual job execution\n     - Failed job retry with fix\n     - Job history preservation\n     - Control vs common queue routing\n     - Multiple reruns of same job\n     - CLI command execution and output validation\n     - Exit code verification\n     - Help message accessibility\n\n### Test Results:\n\n- **All 139 tests pass** (no regressions)\n- **23 new rerun-specific tests** added\n- Test execution time: ~8 seconds\n- Coverage maintained above 80% threshold\n\n### Files Changed:\n\n**Modified files:**\n- `src/script_grabber/grabexceptions.py` (+8 lines)\n- `src/script_grabber/grabber.py` (+73 lines)\n- `pyproject.toml` (+1 line)\n\n**New files created:**\n- `src/script_grabber/rerun.py` (121 lines)\n- `tests/unit/test_rerun.py` (229 lines)\n- `tests/integration/test_rerun_integration.py` (386 lines)\n\n**Total: 736 new lines of production and test code**\n\n### Key Features Delivered:\n\n✅ Rerun completed jobs (DONE, FAILED, TIMEOUT states)  \n✅ Preserve original job files for audit trail  \n✅ Support both common and control queue targeting  \n✅ Atomic file operations using temp directory  \n✅ CLI tool with user-friendly interface  \n✅ Comprehensive error handling and logging  \n✅ Full test coverage with zero regressions  \n✅ Documentation via docstrings and help messages\n\nThe implementation follows all acceptance criteria from the specification and maintains the existing code quality standards.",
+  "success": true,
+  "session_id": "51196cb0-e9f4-486a-9a68-057edf0760b1"
+}
+2025-10-13 22:47:14 - DEBUG - implement_response.output: Perfect! Let me create a final comprehensive summary:
+
+## Summary
+
+I have successfully implemented the task rerun feature for the ScriptGrabber project according to the specification in `specs/add-task-rerun-feature.md`.
+
+### Work Completed
+
+#### Core Implementation:
+
+1. **Exception Handling** (`src/script_grabber/grabexceptions.py` - 8 lines added):
+   - Added `GrabRerunError` for general rerun failures
+   - Added `GrabTaskNotFoundError` for missing task scenarios
+
+2. **Rerun Method** (`src/script_grabber/grabber.py` - 73 lines added):
+   - Implemented `rerun_task()` method in the Grabber class
+   - Searches spool directory for completed jobs (DONE/FAILED/TIMEOUT states)
+   - Uses temp directory for atomic file operations
+   - Supports rerunning to common or control queues
+   - Preserves original job files for audit trail
+   - Updated `ensure_dirs()` to create temp directory
+
+3. **CLI Interface** (`src/script_grabber/rerun.py` - 121 new lines):
+   - Created `grabber-rerun` command-line tool
+   - Supports arguments: grabber_name, cluster_path, job_name
+   - Optional `--queue-type` flag (common/control)
+   - User-friendly success/error messages
+   - Comprehensive logging to rerun.log
+
+4. **Package Configuration** (`pyproject.toml` - 1 line added):
+   - Registered `grabber-rerun` CLI entry point
+
+#### Testing:
+
+5. **Unit Tests** (`tests/unit/test_rerun.py` - 229 new lines):
+   - 10 comprehensive unit tests covering:
+     - Successful rerun for all job states (DONE, FAILED, TIMEOUT)
+     - Error handling for nonexistent jobs
+     - Temp directory creation
+     - Original job preservation
+     - Job name generation
+     - Most recent job selection
+     - Invalid queue type handling
+
+6. **Integration Tests** (`tests/integration/test_rerun_integration.py` - 386 new lines):
+   - 13 end-to-end integration tests covering:
+     - Complete rerun workflow with actual job execution
+     - Failed job retry with fix
+     - Job history preservation
+     - Control vs common queue routing
+     - Multiple reruns of same job
+     - CLI command execution and output validation
+     - Exit code verification
+     - Help message accessibility
+
+### Test Results:
+
+- **All 139 tests pass** (no regressions)
+- **23 new rerun-specific tests** added
+- Test execution time: ~8 seconds
+- Coverage maintained above 80% threshold
+
+### Files Changed:
+
+**Modified files:**
+- `src/script_grabber/grabexceptions.py` (+8 lines)
+- `src/script_grabber/grabber.py` (+73 lines)
+- `pyproject.toml` (+1 line)
+
+**New files created:**
+- `src/script_grabber/rerun.py` (121 lines)
+- `tests/unit/test_rerun.py` (229 lines)
+- `tests/integration/test_rerun_integration.py` (386 lines)
+
+**Total: 736 new lines of production and test code**
+
+### Key Features Delivered:
+
+✅ Rerun completed jobs (DONE, FAILED, TIMEOUT states)  
+✅ Preserve original job files for audit trail  
+✅ Support both common and control queue targeting  
+✅ Atomic file operations using temp directory  
+✅ CLI tool with user-friendly interface  
+✅ Comprehensive error handling and logging  
+✅ Full test coverage with zero regressions  
+✅ Documentation via docstrings and help messages
+
+The implementation follows all acceptance criteria from the specification and maintains the existing code quality standards.
+2025-10-13 22:47:15 - INFO - 
+=== Committing implementation ===
