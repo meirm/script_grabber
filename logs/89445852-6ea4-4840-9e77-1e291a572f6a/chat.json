@@ -1,0 +1,61 @@
+[
+  {
+    "type": "summary",
+    "summary": "Simple Math: 2+2 Calculation",
+    "leafUuid": "ead1eb82-ef2c-4a89-83fc-f32b8414f98f"
+  },
+  {
+    "parentUuid": null,
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "sessionId": "89445852-6ea4-4840-9e77-1e291a572f6a",
+    "version": "2.0.14",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "What is 2+2? Just respond with the number, nothing else."
+    },
+    "uuid": "087c19f4-2558-42e7-b99f-47ddec7a297d",
+    "timestamp": "2025-10-13T20:32:54.729Z"
+  },
+  {
+    "parentUuid": "087c19f4-2558-42e7-b99f-47ddec7a297d",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "sessionId": "89445852-6ea4-4840-9e77-1e291a572f6a",
+    "version": "2.0.14",
+    "gitBranch": "main",
+    "message": {
+      "model": "claude-3-5-haiku-20241022",
+      "id": "msg_01TjELJ4KAVu1oNFWd5ANNJZ",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "4"
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 34671,
+        "cache_read_input_tokens": 6221,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 34671,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 5,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CU5qMx4Xpd6w1RHEkqhgq",
+    "type": "assistant",
+    "uuid": "5b4fb96b-d9ce-47c7-9b9c-5a3803cb7f84",
+    "timestamp": "2025-10-13T20:33:02.315Z"
+  }
+]

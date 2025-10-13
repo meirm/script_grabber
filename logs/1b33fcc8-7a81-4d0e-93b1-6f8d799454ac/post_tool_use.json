@@ -1,0 +1,38 @@
+[
+  {
+    "session_id": "1b33fcc8-7a81-4d0e-93b1-6f8d799454ac",
+    "transcript_path": "/Users/meirm/.claude/projects/-Users-meirm-git-riunx-public-script-grabber/1b33fcc8-7a81-4d0e-93b1-6f8d799454ac.jsonl",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git checkout main",
+      "description": "Switch to main branch"
+    },
+    "tool_response": {
+      "stdout": "M\t.gitignore\nYour branch is up to date with 'origin/main'.\nAlready on 'main'",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "session_id": "1b33fcc8-7a81-4d0e-93b1-6f8d799454ac",
+    "transcript_path": "/Users/meirm/.claude/projects/-Users-meirm-git-riunx-public-script-grabber/1b33fcc8-7a81-4d0e-93b1-6f8d799454ac.jsonl",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git checkout -b feature-1-55759736-add-task-rerun-option",
+      "description": "Create and switch to new branch"
+    },
+    "tool_response": {
+      "stdout": "Switched to a new branch 'feature-1-55759736-add-task-rerun-option'",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  }
+]

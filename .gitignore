@@ -3,6 +3,7 @@
 __cache__
 env
 .env
+.venv/
 build
 dist
 cluster/

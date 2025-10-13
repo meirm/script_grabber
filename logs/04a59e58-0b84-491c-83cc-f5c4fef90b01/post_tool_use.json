@@ -1,0 +1,20 @@
+[
+  {
+    "session_id": "04a59e58-0b84-491c-83cc-f5c4fef90b01",
+    "transcript_path": "/Users/meirm/.claude/projects/-Users-meirm-git-riunx-public-script-grabber/04a59e58-0b84-491c-83cc-f5c4fef90b01.jsonl",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git diff HEAD",
+      "description": "Check what changes have been made"
+    },
+    "tool_response": {
+      "stdout": "diff --git a/.gitignore b/.gitignore\nindex 3f6d729..4de455a 100644\n--- a/.gitignore\n+++ b/.gitignore\n@@ -3,6 +3,7 @@\n __cache__\n env\n .env\n+.venv/\n build\n dist\n cluster/\n\\ No newline at end of file",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  }
+]

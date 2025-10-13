@@ -1,0 +1,10 @@
+[
+  {
+    "session_id": "ebe8946b-79fb-49b7-852d-bcecb38005c0",
+    "transcript_path": "/Users/meirm/.claude/projects/-Users-meirm-git-riunx-public-script-grabber/ebe8946b-79fb-49b7-852d-bcecb38005c0.jsonl",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  }
+]
