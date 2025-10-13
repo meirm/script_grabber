@@ -1,0 +1,1 @@
+/feature Feature request - add rerun option: /chore Add option to rerun a task, what this will do is copy the file with a new name into a temp dir and then move into the pool to be picked by any running grabber. 

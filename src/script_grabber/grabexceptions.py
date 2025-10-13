@@ -46,3 +46,11 @@ class GrabConfigError(GrabError):
 
 class GrabLockError(GrabError):
     pass
+
+class GrabRerunError(GrabError):
+    """Raised when a rerun operation fails."""
+    pass
+
+class GrabTaskNotFoundError(GrabRerunError):
+    """Raised when a task to rerun cannot be found in the spool directory."""
+    pass

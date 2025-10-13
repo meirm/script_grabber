@@ -1,0 +1,48 @@
+/find_plan_file Perfect! I've created a comprehensive feature plan for the task rerun capability. Here's a summary of what was created:
+
+## Feature Plan: Task Rerun Capability
+
+**Location**: `specs/add-task-rerun-feature.md`
+
+### Key Highlights:
+
+**Purpose**: Add the ability to rerun completed, failed, or timed-out tasks by copying them to a temporary directory and moving them back into the queue for re-execution by any available grabber.
+
+**Core Components**:
+1. **`rerun_task()` method** in Grabber class - Core rerun logic
+2. **`grabber-rerun` CLI command** - User-friendly command-line interface
+3. **New exceptions** - `GrabRerunError` and `GrabTaskNotFoundError`
+4. **Comprehensive tests** - Unit and integration tests
+
+**Implementation Plan** - 3 Phases:
+- **Phase 1: Foundation** - Exception types, module structure, CLI setup
+- **Phase 2: Core Implementation** - Rerun logic, file operations, logging
+- **Phase 3: Integration** - CLI interface, testing, validation
+
+**Step-by-Step Tasks** (10 detailed steps):
+1. Define rerun-specific exceptions
+2. Implement core `rerun_task()` method
+3. Create rerun CLI module
+4. Register CLI entry point
+5. Create unit tests
+6. Create integration tests
+7. Add CLI tests
+8. Update directory management
+9. Add logging configuration
+10. Run validation commands
+
+**Key Features**:
+- ✅ Support for all final job states (DONE, FAILED, TIMEOUT)
+- ✅ Preserves job history in spool directory
+- ✅ Supports both common and control queue targets
+- ✅ Atomic operations to prevent race conditions
+- ✅ Comprehensive logging for audit trails
+- ✅ Multiple reruns of same job supported
+
+**Validation**: Includes comprehensive validation commands to ensure:
+- Zero regressions in existing functionality
+- ≥80% test coverage maintained
+- End-to-end manual testing workflow
+- CLI accessibility and usability
+
+The plan follows the exact format requested and provides detailed guidance for implementing the rerun feature while maintaining code quality and test coverage standards.

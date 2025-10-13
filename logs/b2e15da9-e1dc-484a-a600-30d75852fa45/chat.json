@@ -1,0 +1,56 @@
+[
+  {
+    "parentUuid": null,
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "sessionId": "b2e15da9-e1dc-484a-a600-30d75852fa45",
+    "version": "2.0.14",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "What is 2+2? Just respond with the number, nothing else."
+    },
+    "uuid": "22d799fe-8740-4f13-8937-d396d6c28b54",
+    "timestamp": "2025-10-13T20:31:03.999Z"
+  },
+  {
+    "parentUuid": "22d799fe-8740-4f13-8937-d396d6c28b54",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "sessionId": "b2e15da9-e1dc-484a-a600-30d75852fa45",
+    "version": "2.0.14",
+    "gitBranch": "main",
+    "message": {
+      "model": "claude-3-5-haiku-20241022",
+      "id": "msg_014Y32qkWHGenqHCFm6H1j7Q",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "4"
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 27966,
+        "cache_read_input_tokens": 12926,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 27966,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 5,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CU5qDkVY9VT5NeBEF8u6X",
+    "type": "assistant",
+    "uuid": "ead1eb82-ef2c-4a89-83fc-f32b8414f98f",
+    "timestamp": "2025-10-13T20:31:08.674Z"
+  }
+]

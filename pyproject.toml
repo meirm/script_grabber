@@ -24,6 +24,7 @@ classifiers = [
 
 [project.scripts]
 grabber = "script_grabber.grabber:main"
+grabber-rerun = "script_grabber.rerun:main"
 
 [project.optional-dependencies]
 dev = [

@@ -1,0 +1,20 @@
+/classify_issue {
+  "number": 1,
+  "title": "Feature request - add rerun option",
+  "body": "/chore Add option to rerun a task, what this will do is copy the file with a new name into a temp dir and then move into the pool to be picked by any running grabber. ",
+  "state": "OPEN",
+  "author": {
+    "id": "MDQ6VXNlcjU1MTcxMw==",
+    "login": "meirm",
+    "name": "Meir Michanie",
+    "is_bot": false
+  },
+  "assignees": [],
+  "labels": [],
+  "milestone": null,
+  "comments": [],
+  "createdAt": "2025-10-13T20:36:05Z",
+  "updatedAt": "2025-10-13T20:36:05Z",
+  "closedAt": null,
+  "url": "https://github.com/meirm/script_grabber/issues/1"
+}
