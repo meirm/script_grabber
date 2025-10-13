@@ -1,8 +1,14 @@
+adws/
+logs/
+agents/
+specs/
+.claude/
 *.swp
 *.pyc
 __cache__
 env
 .env
+.venv/
 build
 dist
 cluster/

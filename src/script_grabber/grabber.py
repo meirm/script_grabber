@@ -30,7 +30,7 @@ from datetime import datetime, timedelta
 import time
 import signal
 # Import local modules here.
-from .grabexceptions import GrabLockError
+from .grabexceptions import GrabLockError, GrabRerunError, GrabTaskNotFoundError
 __author__ = "Meir Michanie"
 __email__ = "meirm@riunx.com"
 __version__ = "0.1.0"
@@ -172,6 +172,7 @@ class Grabber:
         os.makedirs(self.queue, exist_ok=True)
         os.makedirs(os.path.join(self.clusterpath, "log"), exist_ok=True)
         os.makedirs(self.varlock, exist_ok=True)
+        os.makedirs(os.path.join(self.clusterpath, "temp"), exist_ok=True)
 
     def grab_job(self) -> Optional[str]:
         """Grab a job from the queue if there is one available."""
@@ -250,6 +251,76 @@ class Grabber:
         with open(str(log_path), "a") as f:
             f.write(f"{self.job_file},{datetime.now().strftime('%Y%m%d%H%M%S')},"
                     f"ExitCode({process.returncode})\n")
+
+    def rerun_task(self, job_name: str, target_queue: str = "common") -> str:
+        """
+        Rerun a completed task by copying it to the specified queue.
+
+        :param job_name: Base name of the job to rerun (e.g., "test_job.py")
+        :param target_queue: Target queue type - "common" or "control" (default: "common")
+        :return: Path to the requeued job file
+        :raises GrabTaskNotFoundError: If the specified job cannot be found in spool
+        :raises GrabRerunError: If the rerun operation fails
+        """
+        self.logger.info(f"Attempting to rerun task: {job_name} to {target_queue} queue")
+
+        # Search for completed job files in spool directory
+        # Pattern: {job_name}-{timestamp}-(DONE|FAILED|TIMEOUT)
+        job_base_name = job_name.replace('.py', '')
+        search_pattern = f"{job_base_name}-*"
+
+        matching_jobs = []
+        for filename in os.listdir(self.spool):
+            if filename.startswith(job_base_name) and filename.endswith(('-DONE', '-FAILED', '-TIMEOUT')):
+                matching_jobs.append(filename)
+
+        if not matching_jobs:
+            error_msg = f"Task '{job_name}' not found in spool directory: {self.spool}"
+            self.logger.error(error_msg)
+            raise GrabTaskNotFoundError(error_msg)
+
+        # Use the most recent job (last in sorted list)
+        matching_jobs.sort()
+        source_job = matching_jobs[-1]
+        source_path = os.path.join(self.spool, source_job)
+
+        self.logger.info(f"Found job to rerun: {source_job}")
+
+        # Create temp directory if it doesn't exist
+        temp_dir = os.path.join(self.clusterpath, "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Copy job file to temp directory with original name
+        temp_path = os.path.join(temp_dir, job_name)
+        try:
+            shutil.copy2(source_path, temp_path)
+            self.logger.info(f"Copied job to temp directory: {temp_path}")
+        except Exception as e:
+            error_msg = f"Failed to copy job to temp directory: {e}"
+            self.logger.error(error_msg)
+            raise GrabRerunError(error_msg)
+
+        # Determine target queue path
+        if target_queue == "control":
+            queue_path = self.ctrlqueue
+        elif target_queue == "common":
+            queue_path = self.queue
+        else:
+            error_msg = f"Invalid queue type: {target_queue}. Must be 'common' or 'control'"
+            self.logger.error(error_msg)
+            raise GrabRerunError(error_msg)
+
+        # Move job from temp to target queue (atomic operation)
+        target_path = os.path.join(queue_path, job_name)
+        try:
+            shutil.move(temp_path, target_path)
+            self.logger.info(f"Rerun successful: {source_job} -> {target_queue} queue ({target_path})")
+        except Exception as e:
+            error_msg = f"Failed to move job to queue: {e}"
+            self.logger.error(error_msg)
+            raise GrabRerunError(error_msg)
+
+        return target_path
 
 def  main():
      # Parse command-line arguments.

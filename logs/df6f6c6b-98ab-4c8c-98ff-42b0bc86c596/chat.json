@@ -1,0 +1,78 @@
+[
+  {
+    "parentUuid": null,
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "sessionId": "df6f6c6b-98ab-4c8c-98ff-42b0bc86c596",
+    "version": "2.0.14",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "<command-message>classify_issue is running\u2026</command-message>\n<command-name>/classify_issue</command-name>\n<command-args>{\n  \"number\": 1,\n  \"title\": \"Feature request - add rerun option\",\n  \"body\": \"/chore Add option to rerun a task, what this will do is copy the file with a new name into a temp dir and then move into the pool to be picked by any running grabber. \",\n  \"state\": \"OPEN\",\n  \"author\": {\n    \"id\": \"MDQ6VXNlcjU1MTcxMw==\",\n    \"login\": \"meirm\",\n    \"name\": \"Meir Michanie\",\n    \"is_bot\": false\n  },\n  \"assignees\": [],\n  \"labels\": [],\n  \"milestone\": null,\n  \"comments\": [],\n  \"createdAt\": \"2025-10-13T20:36:05Z\",\n  \"updatedAt\": \"2025-10-13T20:36:05Z\",\n  \"closedAt\": null,\n  \"url\": \"https://github.com/meirm/script_grabber/issues/1\"\n}</command-args>"
+    },
+    "uuid": "68f103e1-0da5-4906-85ff-c37d38cb32a4",
+    "timestamp": "2025-10-13T20:37:30.007Z"
+  },
+  {
+    "parentUuid": "68f103e1-0da5-4906-85ff-c37d38cb32a4",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "sessionId": "df6f6c6b-98ab-4c8c-98ff-42b0bc86c596",
+    "version": "2.0.14",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "# Github Issue Command Selection\n\nBased on the `Github Issue` below, follow the `Instructions` to select the appropriate command to execute based on the `Command Mapping`.\n\n## Instructions\n\n- Based on the details in the `Github Issue`, select the appropriate command to execute.\n- Respond exclusively with '/' followed by the command to execute.\n- Use the command mapping to help you decide which command to respond with.\n- Think hard about the command to execute.\n\n## Command Mapping\n\n- Respond with `/chore` if the issue is a chore.\n- Respond with `/bug` if the issue is a bug.\n- Respond with `/feature` if the issue is a feature.\n- Respond with `0` if the issue isn't any of the above.\n\n## Github Issue\n\n{\n  \"number\": 1,\n  \"title\": \"Feature request - add rerun option\",\n  \"body\": \"/chore Add option to rerun a task, what this will do is copy the file with a new name into a temp dir and then move into the pool to be picked by any running grabber. \",\n  \"state\": \"OPEN\",\n  \"author\": {\n    \"id\": \"MDQ6VXNlcjU1MTcxMw==\",\n    \"login\": \"meirm\",\n    \"name\": \"Meir Michanie\",\n    \"is_bot\": false\n  },\n  \"assignees\": [],\n  \"labels\": [],\n  \"milestone\": null,\n  \"comments\": [],\n  \"createdAt\": \"2025-10-13T20:36:05Z\",\n  \"updatedAt\": \"2025-10-13T20:36:05Z\",\n  \"closedAt\": null,\n  \"url\": \"https://github.com/meirm/script_grabber/issues/1\"\n}"
+        }
+      ]
+    },
+    "isMeta": true,
+    "uuid": "f5f46be6-e6a8-4f9e-9bc5-b53e0b3c81bc",
+    "timestamp": "2025-10-13T20:37:30.007Z"
+  },
+  {
+    "parentUuid": "f5f46be6-e6a8-4f9e-9bc5-b53e0b3c81bc",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/meirm/git/riunx/public/script_grabber",
+    "sessionId": "df6f6c6b-98ab-4c8c-98ff-42b0bc86c596",
+    "version": "2.0.14",
+    "gitBranch": "main",
+    "message": {
+      "model": "claude-sonnet-4-5-20250929",
+      "id": "msg_01XeXqfNJMs99oXJHJGwnxxV",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "/feature"
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 41833,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 41833,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CU5qiCM4zz43YydcVQfx2",
+    "type": "assistant",
+    "uuid": "8aff1b2d-7e32-49ef-b2c7-2800d628e35b",
+    "timestamp": "2025-10-13T20:37:32.905Z"
+  }
+]
