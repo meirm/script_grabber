@@ -1,3 +1,7 @@
+.claude/
+agents/
+logs/
+adws/
 *.swp
 *.pyc
 __cache__
