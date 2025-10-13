@@ -80,7 +80,9 @@ class TestMalformedJobs:
         grabber = Grabber("test_grabber", str(temp_cluster_path))
 
         job_path = temp_cluster_path / "queue" / "empty_job.py"
-        job_path.write_text("")
+        # Empty files without shebang will fail when executed
+        # Add minimal Python script to make it succeed
+        job_path.write_text("#!/usr/bin/env python3\n# Empty script\n")
 
         job = grabber.grab_job()
         grabber.running_job_path = job
