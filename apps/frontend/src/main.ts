@@ -35,13 +35,18 @@ function setTimezonePreference(timezone: TimezonePreference) {
 
 /**
  * Format date/time string based on current timezone preference
+ *
+ * Expects ISO 8601 datetime strings with timezone info from backend (e.g., "2023-10-14T12:00:00+00:00")
+ * The Date constructor properly parses ISO 8601 strings with timezone information
  */
-function formatDateTime(dateString: string | null): string {
+function formatDateTime(dateString: string | null | undefined): string {
   if (!dateString) {
     return 'N/A';
   }
 
   try {
+    // Parse ISO 8601 string with timezone info
+    // Backend sends timezone-aware datetime as ISO 8601 (e.g., "2023-10-14T12:00:00+00:00")
     const date = new Date(dateString);
 
     if (isNaN(date.getTime())) {
@@ -49,8 +54,10 @@ function formatDateTime(dateString: string | null): string {
     }
 
     if (currentTimezone === 'utc') {
+      // Display in UTC
       return date.toLocaleString('en-US', { timeZone: 'UTC' }) + ' (UTC)';
     } else {
+      // Display in user's local timezone
       return date.toLocaleString() + ' (Local)';
     }
   } catch (error) {

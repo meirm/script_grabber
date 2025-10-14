@@ -8,6 +8,44 @@ let refreshTimer = null;
 let currentStatusFilter = 'active'; // Default to showing only queued and running
 let currentArchivedStatusFilter = '';
 let currentView = 'active';
+let currentTimezone = getTimezonePreference();
+/**
+ * Get timezone preference from localStorage
+ */
+function getTimezonePreference() {
+    const stored = localStorage.getItem('scriptgrabber_timezone');
+    return (stored === 'utc' || stored === 'local') ? stored : 'local';
+}
+/**
+ * Set timezone preference in localStorage
+ */
+function setTimezonePreference(timezone) {
+    localStorage.setItem('scriptgrabber_timezone', timezone);
+    currentTimezone = timezone;
+}
+/**
+ * Format date/time string based on current timezone preference
+ */
+function formatDateTime(dateString) {
+    if (!dateString) {
+        return 'N/A';
+    }
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return 'N/A';
+        }
+        if (currentTimezone === 'utc') {
+            return date.toLocaleString('en-US', { timeZone: 'UTC' }) + ' (UTC)';
+        }
+        else {
+            return date.toLocaleString() + ' (Local)';
+        }
+    }
+    catch (error) {
+        return 'N/A';
+    }
+}
 /**
  * Initialize the application
  */
@@ -23,6 +61,7 @@ async function init() {
     setupTabNavigation();
     setupScriptViewerHandlers();
     setupStaleJobHandlers();
+    setupTimezoneToggle();
     // Initial load
     await Promise.all([
         refreshClusterStatus(),
@@ -320,9 +359,7 @@ async function refreshJobList() {
  * Render a job row (desktop table view)
  */
 function renderJobRow(job) {
-    const submittedDate = job.submitted_at
-        ? new Date(job.submitted_at).toLocaleString()
-        : 'N/A';
+    const submittedDate = formatDateTime(job.submitted_at);
     // Show rerun button for terminal states
     const showRerunButton = ['done', 'failed', 'timeout'].includes(job.status);
     const rerunButtonHtml = showRerunButton
@@ -361,9 +398,7 @@ function renderJobRow(job) {
  * Render a job card (mobile card view)
  */
 function renderJobCard(job) {
-    const submittedDate = job.submitted_at
-        ? new Date(job.submitted_at).toLocaleString()
-        : 'N/A';
+    const submittedDate = formatDateTime(job.submitted_at);
     // Show rerun button for terminal states
     const showRerunButton = ['done', 'failed', 'timeout'].includes(job.status);
     const rerunButtonHtml = showRerunButton
@@ -454,12 +489,8 @@ function navigateToMainView() {
  */
 function renderJobDetails(job) {
     const detailsContent = document.getElementById('job-details-content');
-    const submittedDate = job.submitted_at
-        ? new Date(job.submitted_at).toLocaleString()
-        : 'N/A';
-    const completedDate = job.completed_at
-        ? new Date(job.completed_at).toLocaleString()
-        : 'N/A';
+    const submittedDate = formatDateTime(job.submitted_at);
+    const completedDate = formatDateTime(job.completed_at);
     // Show rerun button for terminal states (done, failed, timeout)
     const showRerunButton = ['done', 'failed', 'timeout'].includes(job.status);
     const rerunButtonHtml = showRerunButton
@@ -813,9 +844,7 @@ async function refreshArchivedJobList() {
  * Render archived job row
  */
 function renderArchivedJobRow(job) {
-    const submittedDate = job.submitted_at
-        ? new Date(job.submitted_at).toLocaleString()
-        : 'N/A';
+    const submittedDate = formatDateTime(job.submitted_at);
     return `
     <tr>
       <td><code>${job.job_id}</code></td>
@@ -837,9 +866,7 @@ function renderArchivedJobRow(job) {
  * Render archived job card
  */
 function renderArchivedJobCard(job) {
-    const submittedDate = job.submitted_at
-        ? new Date(job.submitted_at).toLocaleString()
-        : 'N/A';
+    const submittedDate = formatDateTime(job.submitted_at);
     return `
     <div class="job-card">
       <div class="job-card-header">
@@ -972,6 +999,69 @@ async function handleStatusUpdate(jobId, action) {
     catch (error) {
         const message = error.response?.data?.detail || error.message || 'Status update failed';
         showMessage(messageDiv, 'error', message);
+    }
+}
+/**
+ * Setup timezone toggle
+ */
+function setupTimezoneToggle() {
+    const timezoneSwitch = document.getElementById('timezone-switch');
+    const timezoneDisplay = document.getElementById('timezone-display');
+    // Set initial state based on saved preference
+    if (currentTimezone === 'utc') {
+        timezoneSwitch.checked = true;
+        timezoneDisplay.textContent = 'UTC';
+    }
+    else {
+        timezoneSwitch.checked = false;
+        timezoneDisplay.textContent = 'Local Time';
+    }
+    // Handle toggle change
+    timezoneSwitch.addEventListener('change', () => {
+        toggleTimezone();
+    });
+}
+/**
+ * Toggle timezone preference
+ */
+function toggleTimezone() {
+    const timezoneSwitch = document.getElementById('timezone-switch');
+    const timezoneDisplay = document.getElementById('timezone-display');
+    // Update preference
+    const newTimezone = timezoneSwitch.checked ? 'utc' : 'local';
+    setTimezonePreference(newTimezone);
+    // Update indicator
+    timezoneDisplay.textContent = newTimezone === 'utc' ? 'UTC' : 'Local Time';
+    // Refresh all timestamps
+    refreshAllTimestamps();
+}
+/**
+ * Refresh all visible timestamps
+ */
+function refreshAllTimestamps() {
+    // Refresh job list (which will use the new timezone)
+    if (currentView === 'active') {
+        refreshJobList();
+    }
+    else {
+        refreshArchivedJobList();
+    }
+    // If job details view is visible, refresh it
+    const detailsView = document.getElementById('details-view');
+    if (detailsView.style.display !== 'none') {
+        // Extract job ID from details content if available
+        const jobIdElement = document.querySelector('#job-details-content code');
+        if (jobIdElement) {
+            const jobId = jobIdElement.textContent || '';
+            if (jobId) {
+                // Reload job details
+                api.getJobStatus(jobId).then(job => {
+                    renderJobDetails(job);
+                }).catch(error => {
+                    console.error('Failed to refresh job details:', error);
+                });
+            }
+        }
     }
 }
 // Initialize on page load

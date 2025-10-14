@@ -1,5 +1,9 @@
 FROM python:3.12
 
+# Set timezone to UTC (can be overridden with -e TZ=<timezone> at runtime)
+# This ensures consistent timezone handling across containers
+ENV TZ=UTC
+
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 

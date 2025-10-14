@@ -55,6 +55,7 @@ podman run -dt \
     --env CLUSTER_PATH=/cluster \
     --env HOST=0.0.0.0 \
     --env PORT=8000 \
+    --env TZ=UTC \
     python:3.12-slim \
     bash -c "pip install -q fastapi uvicorn python-multipart python-dotenv pydantic aiofiles pytest pytest-timeout pytest-cov pytest-mock pytest-asyncio && python server.py"
 
@@ -66,6 +67,7 @@ podman run -dt \
     -v "./apps/frontend:/app/frontend:Z" \
     -w /app/frontend \
     --env VITE_API_URL=http://localhost:8000 \
+    --env TZ=UTC \
     node:20-slim \
     bash -c "npm install && npm run dev -- --host 0.0.0.0"
 

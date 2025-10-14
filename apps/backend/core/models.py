@@ -1,7 +1,7 @@
 """Pydantic models for API requests and responses."""
 
 from typing import Optional, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 
@@ -14,6 +14,19 @@ class JobSubmitResponse(BaseModel):
 
 class JobStatus(BaseModel):
     """Job status information."""
+    # Pydantic v2 automatically serializes timezone-aware datetime to ISO 8601 with timezone
+    model_config = ConfigDict(
+        # Enable JSON schema generation with proper datetime serialization
+        json_schema_extra={
+            "example": {
+                "job_id": "test_job",
+                "status": "done",
+                "submitted_at": "2023-10-14T12:00:00+00:00",
+                "completed_at": "2023-10-14T12:05:00+00:00"
+            }
+        }
+    )
+
     job_id: str
     status: Literal["queued", "running", "done", "failed", "timeout", "not_found", "stale"]
     grabber: Optional[str] = None
@@ -38,6 +51,8 @@ class ClusterStatus(BaseModel):
 
 class JobListItem(BaseModel):
     """Job list item for pagination."""
+    # Pydantic v2 automatically serializes timezone-aware datetime to ISO 8601 with timezone
+
     job_id: str
     status: Literal["queued", "running", "done", "failed", "timeout", "stale"]
     grabber: Optional[str] = None
@@ -64,6 +79,8 @@ class JobRerunResponse(BaseModel):
 
 class JobArchiveResponse(BaseModel):
     """Response for job archive request."""
+    # Pydantic v2 automatically serializes timezone-aware datetime to ISO 8601 with timezone
+
     job_id: str
     status: str
     message: str
@@ -100,6 +117,8 @@ class JobScriptContent(BaseModel):
 
 class StaleJobInfo(BaseModel):
     """Information about a stale job."""
+    # Pydantic v2 automatically serializes timezone-aware datetime to ISO 8601 with timezone
+
     job_id: str
     grabber: str
     runtime_duration: Optional[float] = None  # in seconds

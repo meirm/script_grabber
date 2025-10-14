@@ -4,7 +4,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import aiofiles
 
@@ -48,7 +48,7 @@ class JobManager:
         safe_filename = self._sanitize_filename(filename)
 
         # Generate unique job ID with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
         job_id = f"{safe_filename}_{timestamp}"
 
         # Write to queue
@@ -80,7 +80,7 @@ class JobManager:
             return JobStatus(
                 job_id=job_id,
                 status="queued",
-                submitted_at=datetime.fromtimestamp(queue_file.stat().st_mtime)
+                submitted_at=datetime.fromtimestamp(queue_file.stat().st_mtime, tz=timezone.utc)
             )
 
         # Search spool directories for job
@@ -132,8 +132,8 @@ class JobManager:
                         job_id=job_id,
                         status=status_name,
                         grabber=grabber_name,
-                        submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime),
-                        completed_at=datetime.fromtimestamp(job_file.stat().st_mtime) if status_name != "running" else None,
+                        submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime, tz=timezone.utc),
+                        completed_at=datetime.fromtimestamp(job_file.stat().st_mtime, tz=timezone.utc) if status_name != "running" else None,
                         stdout=stdout_content,
                         stderr=stderr_content,
                         exit_code=exit_code
@@ -218,7 +218,7 @@ class JobManager:
                 all_jobs.append(JobListItem(
                     job_id=job_file.name,
                     status="queued",
-                    submitted_at=datetime.fromtimestamp(job_file.stat().st_mtime)
+                    submitted_at=datetime.fromtimestamp(job_file.stat().st_mtime, tz=timezone.utc)
                 ))
 
         # Get jobs from spools
@@ -248,7 +248,7 @@ class JobManager:
                             job_id=job_id,
                             status=status_name,
                             grabber=grabber_name,
-                            submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime),
+                            submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime, tz=timezone.utc),
                             is_archived=False,
                             is_stale=(status_name == "stale")
                         ))
@@ -377,7 +377,7 @@ class JobManager:
             job_id=job_id,
             status="success",
             message=f"Job {job_id} archived successfully",
-            archived_at=datetime.now()
+            archived_at=datetime.now(timezone.utc)
         )
 
     async def archive_jobs_bulk(self, job_ids: list[str]) -> BulkArchiveResponse:
@@ -459,7 +459,7 @@ class JobManager:
                             job_id=job_id,
                             status=status_name,
                             grabber=grabber_name,
-                            submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime),
+                            submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime, tz=timezone.utc),
                             is_archived=True,
                             is_stale=(status_name == "stale")
                         ))
@@ -581,7 +581,7 @@ class JobManager:
                             job_id=job_id,
                             grabber=grabber_name,
                             runtime_duration=runtime_duration,
-                            submitted_at=datetime.fromtimestamp(ctime)
+                            submitted_at=datetime.fromtimestamp(ctime, tz=timezone.utc)
                         ))
 
         return StaleJobDetectionResponse(
