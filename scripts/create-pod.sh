@@ -56,7 +56,7 @@ podman run -dt \
     --env HOST=0.0.0.0 \
     --env PORT=8000 \
     python:3.12-slim \
-    bash -c "pip install -q fastapi uvicorn python-multipart python-dotenv pydantic aiofiles && python server.py"
+    bash -c "pip install -q fastapi uvicorn python-multipart python-dotenv pydantic aiofiles pytest pytest-timeout pytest-cov pytest-mock pytest-asyncio && python server.py"
 
 # Start frontend container
 echo -e "${GREEN}Starting frontend container...${NC}"

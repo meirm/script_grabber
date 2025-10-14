@@ -8,7 +8,7 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
-# Install script_grabber from local source
-RUN uv pip install --system --no-cache .
+# Install script_grabber from local source with dev dependencies
+RUN uv pip install --system --no-cache .[dev]
 
 ENTRYPOINT ["grabber"]

@@ -57,4 +57,60 @@ export const api = {
         const response = await axios.post(`${API_BASE}/jobs/${jobId}/rerun`);
         return response.data;
     },
+    /**
+     * Archive a completed job
+     */
+    async archiveJob(jobId) {
+        const response = await axios.post(`${API_BASE}/jobs/${jobId}/archive`);
+        return response.data;
+    },
+    /**
+     * Archive multiple jobs in bulk
+     */
+    async archiveBulkJobs(jobIds) {
+        const response = await axios.post(`${API_BASE}/jobs/archive/bulk`, { job_ids: jobIds });
+        return response.data;
+    },
+    /**
+     * List archived jobs
+     */
+    async listArchivedJobs(status, page = 1, pageSize = 50) {
+        const params = new URLSearchParams();
+        if (status)
+            params.append('status', status);
+        params.append('page', page.toString());
+        params.append('page_size', pageSize.toString());
+        const response = await axios.get(`${API_BASE}/jobs/archived?${params}`);
+        return response.data;
+    },
+    /**
+     * Read job script content
+     */
+    async readJobScript(jobId, isArchived = false) {
+        const params = new URLSearchParams();
+        params.append('is_archived', isArchived.toString());
+        const response = await axios.get(`${API_BASE}/jobs/${jobId}/script?${params}`);
+        return response.data;
+    },
+    /**
+     * Detect stale jobs (jobs with dead grabber processes)
+     */
+    async detectStaleJobs() {
+        const response = await axios.get(`${API_BASE}/jobs/stale`);
+        return response.data;
+    },
+    /**
+     * Mark a RUNNING job as STALE
+     */
+    async markJobAsStale(jobId) {
+        const response = await axios.post(`${API_BASE}/jobs/${jobId}/mark-stale`);
+        return response.data;
+    },
+    /**
+     * Mark a RUNNING or STALE job as FAILED
+     */
+    async markJobAsFailed(jobId) {
+        const response = await axios.post(`${API_BASE}/jobs/${jobId}/mark-failed`);
+        return response.data;
+    },
 };

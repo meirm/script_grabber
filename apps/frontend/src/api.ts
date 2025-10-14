@@ -9,6 +9,11 @@ import type {
   ClusterStatus,
   JobListResponse,
   JobRerunResponse,
+  JobArchiveResponse,
+  BulkArchiveResponse,
+  JobScriptContent,
+  StaleJobDetectionResponse,
+  JobStatusUpdateResponse,
 } from './types';
 
 const API_BASE = '/api';
@@ -80,6 +85,92 @@ export const api = {
   async rerunJob(jobId: string): Promise<JobRerunResponse> {
     const response = await axios.post<JobRerunResponse>(
       `${API_BASE}/jobs/${jobId}/rerun`
+    );
+    return response.data;
+  },
+
+  /**
+   * Archive a completed job
+   */
+  async archiveJob(jobId: string): Promise<JobArchiveResponse> {
+    const response = await axios.post<JobArchiveResponse>(
+      `${API_BASE}/jobs/${jobId}/archive`
+    );
+    return response.data;
+  },
+
+  /**
+   * Archive multiple jobs in bulk
+   */
+  async archiveBulkJobs(jobIds: string[]): Promise<BulkArchiveResponse> {
+    const response = await axios.post<BulkArchiveResponse>(
+      `${API_BASE}/jobs/archive/bulk`,
+      { job_ids: jobIds }
+    );
+    return response.data;
+  },
+
+  /**
+   * List archived jobs
+   */
+  async listArchivedJobs(
+    status?: string,
+    page: number = 1,
+    pageSize: number = 50
+  ): Promise<JobListResponse> {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page.toString());
+    params.append('page_size', pageSize.toString());
+
+    const response = await axios.get<JobListResponse>(
+      `${API_BASE}/jobs/archived?${params}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Read job script content
+   */
+  async readJobScript(
+    jobId: string,
+    isArchived: boolean = false
+  ): Promise<JobScriptContent> {
+    const params = new URLSearchParams();
+    params.append('is_archived', isArchived.toString());
+
+    const response = await axios.get<JobScriptContent>(
+      `${API_BASE}/jobs/${jobId}/script?${params}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Detect stale jobs (jobs with dead grabber processes)
+   */
+  async detectStaleJobs(): Promise<StaleJobDetectionResponse> {
+    const response = await axios.get<StaleJobDetectionResponse>(
+      `${API_BASE}/jobs/stale`
+    );
+    return response.data;
+  },
+
+  /**
+   * Mark a RUNNING job as STALE
+   */
+  async markJobAsStale(jobId: string): Promise<JobStatusUpdateResponse> {
+    const response = await axios.post<JobStatusUpdateResponse>(
+      `${API_BASE}/jobs/${jobId}/mark-stale`
+    );
+    return response.data;
+  },
+
+  /**
+   * Mark a RUNNING or STALE job as FAILED
+   */
+  async markJobAsFailed(jobId: string): Promise<JobStatusUpdateResponse> {
+    const response = await axios.post<JobStatusUpdateResponse>(
+      `${API_BASE}/jobs/${jobId}/mark-failed`
     );
     return response.data;
   },

@@ -166,6 +166,7 @@
       .status-done { background: #e8f5e9; color: #388e3c; }
       .status-failed { background: #ffebee; color: #d32f2f; }
       .status-timeout { background: #fce4ec; color: #c2185b; }
+      .status-stale { background: #fff9c4; color: #f57f17; }
 
       .loading {
         text-align: center;
@@ -536,6 +537,239 @@
           font-size: 0.9em;
         }
       }
+
+      /* Archive Feature Styles */
+      .tab-navigation {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #ecf0f1;
+      }
+
+      .tab-navigation button {
+        background: transparent;
+        color: #7f8c8d;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 12px 24px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .tab-navigation button:hover {
+        color: #2c3e50;
+        background: #f8f9fa;
+      }
+
+      .tab-navigation button.active {
+        color: #3498db;
+        border-bottom-color: #3498db;
+      }
+
+      .bulk-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+      }
+
+      .bulk-controls input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .bulk-controls label {
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      #bulk-archive-btn {
+        background: #95a5a6;
+        margin-left: auto;
+      }
+
+      #bulk-archive-btn:not(:disabled):hover {
+        background: #7f8c8d;
+      }
+
+      .archive-btn {
+        background: #95a5a6;
+        color: white;
+        padding: 6px 12px;
+        font-size: 0.9em;
+        margin-left: 8px;
+      }
+
+      .archive-btn:hover:not(:disabled) {
+        background: #7f8c8d;
+      }
+
+      .job-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .script-viewer {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-top: 20px;
+      }
+
+      .script-viewer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #ecf0f1;
+      }
+
+      .script-viewer-meta {
+        font-size: 0.9em;
+        color: #7f8c8d;
+        margin-bottom: 15px;
+      }
+
+      .script-content-box {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 500px;
+        overflow-y: auto;
+      }
+
+      .stale-jobs-section {
+        background: #fff9c4;
+        border-left: 4px solid #f57f17;
+        padding: 20px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .stale-jobs-section h3 {
+        color: #f57f17;
+        margin-bottom: 15px;
+      }
+
+      .stale-job-item {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .stale-job-info {
+        flex: 1;
+      }
+
+      .stale-job-info strong {
+        color: #2c3e50;
+        font-family: monospace;
+      }
+
+      .stale-job-info small {
+        color: #7f8c8d;
+        display: block;
+        margin-top: 5px;
+      }
+
+      .stale-job-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .stale-btn {
+        background: #f39c12;
+        padding: 8px 16px;
+        font-size: 0.9em;
+      }
+
+      .stale-btn:hover {
+        background: #e67e22;
+      }
+
+      .failed-btn {
+        background: #e74c3c;
+        padding: 8px 16px;
+        font-size: 0.9em;
+      }
+
+      .failed-btn:hover {
+        background: #c0392b;
+      }
+
+      #close-script-viewer {
+        background: #95a5a6;
+      }
+
+      #close-script-viewer:hover {
+        background: #7f8c8d;
+      }
+
+      @media (max-width: 768px) {
+        .tab-navigation {
+          overflow-x: auto;
+        }
+
+        .tab-navigation button {
+          padding: 10px 16px;
+          font-size: 0.9em;
+          white-space: nowrap;
+        }
+
+        .bulk-controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        #bulk-archive-btn {
+          margin-left: 0;
+          width: 100%;
+        }
+
+        .script-viewer {
+          padding: 15px;
+        }
+
+        .script-viewer-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+
+        .stale-job-item {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+
+        .stale-job-actions {
+          flex-direction: column;
+        }
+
+        .stale-job-actions button {
+          width: 100%;
+        }
+      }
     </style>
   </head>
   <body>
@@ -566,19 +800,70 @@
           <button class="refresh-btn" id="refresh-btn">🔄 Refresh</button>
         </div>
 
-        <div class="filters">
-          <select id="status-filter">
-            <option value="">All Status</option>
-            <option value="queued">Queued</option>
-            <option value="running">Running</option>
-            <option value="done">Done</option>
-            <option value="failed">Failed</option>
-            <option value="timeout">Timeout</option>
-          </select>
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+          <button id="active-tab" class="active">Active Jobs</button>
+          <button id="archived-tab">Archived Jobs</button>
         </div>
 
-        <div id="jobs-list">
-          <div class="loading">Loading jobs...</div>
+        <!-- Stale Jobs Detection -->
+        <div id="stale-jobs-detection" style="display: none;">
+          <button id="detect-stale-btn" style="margin-bottom: 15px;">🔍 Detect Stale Jobs</button>
+          <div id="stale-jobs-list"></div>
+        </div>
+
+        <!-- Active Jobs View -->
+        <div id="active-jobs-view">
+          <div class="filters">
+            <select id="status-filter">
+              <option value="active" selected>Active Only (Queued + Running)</option>
+              <option value="">All Status</option>
+              <option value="queued">Queued</option>
+              <option value="running">Running</option>
+              <option value="done">Done</option>
+              <option value="failed">Failed</option>
+              <option value="timeout">Timeout</option>
+              <option value="stale">Stale</option>
+            </select>
+          </div>
+
+          <!-- Bulk Archive Controls -->
+          <div class="bulk-controls">
+            <input type="checkbox" id="select-all-jobs" />
+            <label for="select-all-jobs">Select All</label>
+            <button id="bulk-archive-btn" disabled>📦 Archive Selected (0)</button>
+          </div>
+
+          <div id="jobs-list">
+            <div class="loading">Loading jobs...</div>
+          </div>
+        </div>
+
+        <!-- Archived Jobs View -->
+        <div id="archived-jobs-view" style="display: none;">
+          <div class="filters">
+            <select id="archived-status-filter">
+              <option value="">All Status</option>
+              <option value="done">Done</option>
+              <option value="failed">Failed</option>
+              <option value="timeout">Timeout</option>
+              <option value="stale">Stale</option>
+            </select>
+          </div>
+
+          <div id="archived-jobs-list">
+            <div class="loading">Loading archived jobs...</div>
+          </div>
+        </div>
+
+        <!-- Script Viewer -->
+        <div id="script-viewer" class="script-viewer" style="display: none;">
+          <div class="script-viewer-header">
+            <h3>📄 Script Content</h3>
+            <button id="close-script-viewer">Close</button>
+          </div>
+          <div class="script-viewer-meta" id="script-meta"></div>
+          <div class="script-content-box" id="script-content"></div>
         </div>
       </div>
     </div>
@@ -592,6 +877,16 @@
         </div>
         <div id="job-details-content">
           <div class="loading">Loading job details...</div>
+        </div>
+
+        <!-- Script Viewer in Details View -->
+        <div id="details-script-viewer" class="script-viewer" style="display: none;">
+          <div class="script-viewer-header">
+            <h3>📄 Script Content</h3>
+            <button id="close-details-script-viewer">Close</button>
+          </div>
+          <div class="script-viewer-meta" id="details-script-meta"></div>
+          <div class="script-content-box" id="details-script-content"></div>
         </div>
       </div>
     </div>

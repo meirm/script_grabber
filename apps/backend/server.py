@@ -16,7 +16,14 @@ from core.models import (
     JobStatus,
     ClusterStatus,
     JobListResponse,
-    JobRerunResponse
+    JobRerunResponse,
+    JobArchiveResponse,
+    BulkArchiveRequest,
+    BulkArchiveResponse,
+    ArchivedJobListResponse,
+    JobScriptContent,
+    StaleJobDetectionResponse,
+    JobStatusUpdateResponse
 )
 
 # Load environment variables
@@ -103,6 +110,54 @@ async def submit_job(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to submit job: {str(e)}"
+        )
+
+
+@app.get("/api/jobs/archived", response_model=ArchivedJobListResponse)
+async def list_archived_jobs(
+    status: Optional[str] = Query(None, description="Filter by status"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(50, ge=1, le=100, description="Jobs per page")
+):
+    """List archived jobs with optional filtering and pagination.
+
+    Args:
+        status: Filter by status (done, failed, timeout, stale)
+        page: Page number (1-indexed)
+        page_size: Number of jobs per page
+
+    Returns:
+        ArchivedJobListResponse with paginated archived job list
+    """
+    try:
+        jobs, total = await job_manager.list_archived_jobs(status, page, page_size)
+        return ArchivedJobListResponse(
+            jobs=jobs,
+            total=total,
+            page=page,
+            page_size=page_size
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list archived jobs: {str(e)}"
+        )
+
+
+@app.get("/api/jobs/stale", response_model=StaleJobDetectionResponse)
+async def detect_stale_jobs():
+    """Detect jobs with dead grabber processes.
+
+    Returns:
+        StaleJobDetectionResponse with list of stale jobs
+    """
+    try:
+        response = await job_manager.detect_stale_jobs()
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to detect stale jobs: {str(e)}"
         )
 
 
@@ -213,6 +268,150 @@ async def rerun_job(job_id: str):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to rerun job: {str(e)}"
+        )
+
+
+@app.post("/api/jobs/{job_id}/archive", response_model=JobArchiveResponse)
+async def archive_job(job_id: str):
+    """Archive a completed job.
+
+    Args:
+        job_id: Job identifier to archive
+
+    Returns:
+        JobArchiveResponse with status and details
+    """
+    try:
+        response = await job_manager.archive_job(job_id)
+        return response
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to archive job: {str(e)}"
+        )
+
+
+@app.post("/api/jobs/archive/bulk", response_model=BulkArchiveResponse)
+async def archive_jobs_bulk(request: BulkArchiveRequest):
+    """Archive multiple jobs in bulk.
+
+    Args:
+        request: BulkArchiveRequest with list of job IDs
+
+    Returns:
+        BulkArchiveResponse with counts and detailed results
+    """
+    try:
+        response = await job_manager.archive_jobs_bulk(request.job_ids)
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to archive jobs: {str(e)}"
+        )
+
+
+@app.get("/api/jobs/{job_id}/script", response_model=JobScriptContent)
+async def read_job_script(
+    job_id: str,
+    is_archived: bool = Query(False, description="Search in archive directory")
+):
+    """Read job script content.
+
+    Args:
+        job_id: Job identifier
+        is_archived: Whether to search in archive or spool
+
+    Returns:
+        JobScriptContent with script details
+    """
+    try:
+        content = await job_manager.read_job_script(job_id, is_archived)
+        return content
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to read job script: {str(e)}"
+        )
+
+
+@app.post("/api/jobs/{job_id}/mark-stale", response_model=JobStatusUpdateResponse)
+async def mark_job_as_stale(job_id: str):
+    """Mark a RUNNING job as STALE.
+
+    Args:
+        job_id: Job identifier
+
+    Returns:
+        JobStatusUpdateResponse with status change details
+    """
+    try:
+        response = await job_manager.mark_job_as_stale(job_id)
+        return response
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to mark job as stale: {str(e)}"
+        )
+
+
+@app.post("/api/jobs/{job_id}/mark-failed", response_model=JobStatusUpdateResponse)
+async def mark_job_as_failed(job_id: str):
+    """Mark a RUNNING or STALE job as FAILED.
+
+    Args:
+        job_id: Job identifier
+
+    Returns:
+        JobStatusUpdateResponse with status change details
+    """
+    try:
+        response = await job_manager.mark_job_as_failed(job_id)
+        return response
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to mark job as failed: {str(e)}"
         )
 
 

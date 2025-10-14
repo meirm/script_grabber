@@ -8,7 +8,11 @@ from datetime import datetime
 import re
 import aiofiles
 
-from .models import JobStatus, ClusterStatus, JobListItem
+from .models import (
+    JobStatus, ClusterStatus, JobListItem, JobArchiveResponse,
+    BulkArchiveResponse, JobScriptContent, StaleJobInfo,
+    StaleJobDetectionResponse, JobStatusUpdateResponse
+)
 
 
 class JobManager:
@@ -21,12 +25,14 @@ class JobManager:
         self.spool_path = self.cluster_path / "spool"
         self.log_path = self.cluster_path / "log"
         self.varlock_path = self.cluster_path / "varlock"
+        self.archive_path = self.cluster_path / "archive"
 
         # Ensure directories exist
         self.queue_path.mkdir(parents=True, exist_ok=True)
         self.spool_path.mkdir(parents=True, exist_ok=True)
         self.log_path.mkdir(parents=True, exist_ok=True)
         self.varlock_path.mkdir(parents=True, exist_ok=True)
+        self.archive_path.mkdir(parents=True, exist_ok=True)
 
     async def submit_job(self, filename: str, content: bytes) -> str:
         """Submit a job to the queue.
@@ -90,6 +96,7 @@ class JobManager:
                 ("-DONE", "done"),
                 ("-FAILED", "failed"),
                 ("-TIMEOUT", "timeout"),
+                ("-STALE", "stale"),
             ]:
                 job_files = list(grabber_spool.glob(f"*{job_id}*{status_suffix}"))
                 if job_files:
@@ -226,6 +233,7 @@ class JobManager:
                     ("-DONE", "done"),
                     ("-FAILED", "failed"),
                     ("-TIMEOUT", "timeout"),
+                    ("-STALE", "stale"),
                 ]:
                     if status_filter and status_filter != status_name:
                         continue
@@ -240,7 +248,9 @@ class JobManager:
                             job_id=job_id,
                             status=status_name,
                             grabber=grabber_name,
-                            submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime)
+                            submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime),
+                            is_archived=False,
+                            is_stale=(status_name == "stale")
                         ))
 
         # Sort by submission time (newest first)
@@ -305,3 +315,374 @@ class JobManager:
         new_job_id = await self.submit_job(original_filename, content)
 
         return new_job_id, original_filename
+
+    async def archive_job(self, job_id: str) -> JobArchiveResponse:
+        """Archive a completed job.
+
+        Args:
+            job_id: Job identifier to archive
+
+        Returns:
+            JobArchiveResponse with status and details
+
+        Raises:
+            ValueError: If job_id is invalid or job is not in terminal state
+            FileNotFoundError: If job cannot be found
+        """
+        # Sanitize job_id to prevent path traversal
+        if '..' in job_id or '/' in job_id or '\\' in job_id:
+            raise ValueError(f"Invalid job_id: {job_id}")
+
+        # Find job in spool directories
+        job_file_path = None
+        grabber_name = None
+        status_suffix = None
+
+        if self.spool_path.exists():
+            for grabber_spool in self.spool_path.glob("*"):
+                if not grabber_spool.is_dir():
+                    continue
+
+                # Only archive terminal states or stale running jobs
+                for suffix in ["-DONE", "-FAILED", "-TIMEOUT", "-STALE"]:
+                    matching_files = list(grabber_spool.glob(f"*{job_id}*{suffix}"))
+                    if matching_files:
+                        job_file_path = matching_files[0]
+                        grabber_name = grabber_spool.name
+                        status_suffix = suffix
+                        break
+
+                if job_file_path:
+                    break
+
+        if not job_file_path or not grabber_name:
+            raise FileNotFoundError(f"Job {job_id} not found or not in archivable state")
+
+        # Create archive directory for this grabber
+        archive_grabber_path = self.archive_path / grabber_name
+        archive_grabber_path.mkdir(parents=True, exist_ok=True)
+
+        # Move job file to archive
+        archive_job_path = archive_grabber_path / job_file_path.name
+        shutil.move(str(job_file_path), str(archive_job_path))
+
+        # Move associated log files if they exist
+        for log_ext in ['.out', '.err', '.log']:
+            log_file = self.log_path / f"{job_id}{log_ext}"
+            if log_file.exists():
+                archive_log_path = archive_grabber_path / log_file.name
+                shutil.move(str(log_file), str(archive_log_path))
+
+        return JobArchiveResponse(
+            job_id=job_id,
+            status="success",
+            message=f"Job {job_id} archived successfully",
+            archived_at=datetime.now()
+        )
+
+    async def archive_jobs_bulk(self, job_ids: list[str]) -> BulkArchiveResponse:
+        """Archive multiple jobs in bulk.
+
+        Args:
+            job_ids: List of job identifiers to archive
+
+        Returns:
+            BulkArchiveResponse with counts and detailed results
+        """
+        results = []
+        archived_count = 0
+        failed_count = 0
+
+        for job_id in job_ids:
+            try:
+                response = await self.archive_job(job_id)
+                results.append({
+                    "job_id": job_id,
+                    "status": "success",
+                    "message": response.message
+                })
+                archived_count += 1
+            except Exception as e:
+                results.append({
+                    "job_id": job_id,
+                    "status": "failed",
+                    "message": str(e)
+                })
+                failed_count += 1
+
+        return BulkArchiveResponse(
+            archived_count=archived_count,
+            failed_count=failed_count,
+            results=results
+        )
+
+    async def list_archived_jobs(
+        self,
+        status_filter: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 50
+    ) -> tuple[List[JobListItem], int]:
+        """List archived jobs with optional filtering and pagination.
+
+        Args:
+            status_filter: Filter by status (done, failed, timeout, stale)
+            page: Page number (1-indexed)
+            page_size: Number of jobs per page
+
+        Returns:
+            Tuple of (jobs list, total count)
+        """
+        all_archived_jobs = []
+
+        if self.archive_path.exists():
+            for grabber_archive in self.archive_path.glob("*"):
+                if not grabber_archive.is_dir():
+                    continue
+
+                grabber_name = grabber_archive.name
+
+                for status_suffix, status_name in [
+                    ("-DONE", "done"),
+                    ("-FAILED", "failed"),
+                    ("-TIMEOUT", "timeout"),
+                    ("-STALE", "stale"),
+                ]:
+                    if status_filter and status_filter != status_name:
+                        continue
+
+                    for job_file in grabber_archive.glob(f"*{status_suffix}"):
+                        # Extract original job ID
+                        job_name = job_file.name.replace(status_suffix, "")
+                        job_id = re.sub(r'-\d{14}$', '', job_name)
+
+                        all_archived_jobs.append(JobListItem(
+                            job_id=job_id,
+                            status=status_name,
+                            grabber=grabber_name,
+                            submitted_at=datetime.fromtimestamp(job_file.stat().st_ctime),
+                            is_archived=True,
+                            is_stale=(status_name == "stale")
+                        ))
+
+        # Sort by submission time (newest first)
+        all_archived_jobs.sort(key=lambda x: x.submitted_at or datetime.min, reverse=True)
+
+        # Pagination
+        total = len(all_archived_jobs)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_jobs = all_archived_jobs[start_idx:end_idx]
+
+        return paginated_jobs, total
+
+    async def read_job_script(self, job_id: str, is_archived: bool = False) -> JobScriptContent:
+        """Read job script content.
+
+        Args:
+            job_id: Job identifier
+            is_archived: Whether to search in archive or spool
+
+        Returns:
+            JobScriptContent with script details
+
+        Raises:
+            FileNotFoundError: If job file cannot be found
+            ValueError: If job_id is invalid or file is too large
+        """
+        # Sanitize job_id to prevent path traversal
+        if '..' in job_id or '/' in job_id or '\\' in job_id:
+            raise ValueError(f"Invalid job_id: {job_id}")
+
+        # Search in appropriate directory
+        search_path = self.archive_path if is_archived else self.spool_path
+        job_file_path = None
+
+        if search_path.exists():
+            for grabber_dir in search_path.glob("*"):
+                if not grabber_dir.is_dir():
+                    continue
+
+                # Search for job with any status suffix
+                for suffix in ["-RUNNING", "-DONE", "-FAILED", "-TIMEOUT", "-STALE", ""]:
+                    matching_files = list(grabber_dir.glob(f"*{job_id}*{suffix}")) if suffix else list(grabber_dir.glob(f"*{job_id}*"))
+                    if matching_files:
+                        job_file_path = matching_files[0]
+                        break
+
+                if job_file_path:
+                    break
+
+        if not job_file_path or not job_file_path.exists():
+            raise FileNotFoundError(f"Job script not found for job_id: {job_id}")
+
+        # Check file size (10MB limit)
+        file_size = job_file_path.stat().st_size
+        if file_size > 10 * 1024 * 1024:
+            raise ValueError(f"Script file too large: {file_size} bytes (10MB limit)")
+
+        # Read file content
+        try:
+            async with aiofiles.open(job_file_path, 'r', encoding='utf-8') as f:
+                content = await f.read()
+        except UnicodeDecodeError:
+            raise ValueError("Cannot read binary file content")
+
+        return JobScriptContent(
+            job_id=job_id,
+            filename=job_id,
+            content=content,
+            size=file_size
+        )
+
+    async def detect_stale_jobs(self) -> StaleJobDetectionResponse:
+        """Detect jobs with dead grabber processes.
+
+        Returns:
+            StaleJobDetectionResponse with list of stale jobs
+        """
+        stale_jobs = []
+
+        if self.spool_path.exists():
+            for grabber_spool in self.spool_path.glob("*"):
+                if not grabber_spool.is_dir():
+                    continue
+
+                grabber_name = grabber_spool.name
+
+                # Check if grabber is alive
+                lock_file = self.varlock_path / f"{grabber_name}.lock"
+                grabber_alive = False
+
+                if lock_file.exists():
+                    try:
+                        async with aiofiles.open(lock_file, 'r') as f:
+                            pid = int(await f.read())
+                            # Check if process exists
+                            try:
+                                os.kill(pid, 0)
+                                grabber_alive = True
+                            except OSError:
+                                pass  # Process not running
+                    except (ValueError, FileNotFoundError):
+                        pass
+
+                # If grabber is dead, all RUNNING jobs are stale
+                if not grabber_alive:
+                    for job_file in grabber_spool.glob("*-RUNNING"):
+                        job_name = job_file.name.replace("-RUNNING", "")
+                        job_id = re.sub(r'-\d{14}$', '', job_name)
+
+                        # Calculate runtime duration
+                        ctime = job_file.stat().st_ctime
+                        mtime = job_file.stat().st_mtime
+                        runtime_duration = mtime - ctime
+
+                        stale_jobs.append(StaleJobInfo(
+                            job_id=job_id,
+                            grabber=grabber_name,
+                            runtime_duration=runtime_duration,
+                            submitted_at=datetime.fromtimestamp(ctime)
+                        ))
+
+        return StaleJobDetectionResponse(
+            stale_jobs=stale_jobs,
+            count=len(stale_jobs)
+        )
+
+    async def mark_job_as_stale(self, job_id: str) -> JobStatusUpdateResponse:
+        """Mark a RUNNING job as STALE.
+
+        Args:
+            job_id: Job identifier
+
+        Returns:
+            JobStatusUpdateResponse with status change details
+
+        Raises:
+            FileNotFoundError: If job not found
+            ValueError: If job is not in RUNNING state
+        """
+        # Sanitize job_id
+        if '..' in job_id or '/' in job_id or '\\' in job_id:
+            raise ValueError(f"Invalid job_id: {job_id}")
+
+        # Find RUNNING job
+        job_file_path = None
+        if self.spool_path.exists():
+            for grabber_spool in self.spool_path.glob("*"):
+                if not grabber_spool.is_dir():
+                    continue
+
+                matching_files = list(grabber_spool.glob(f"*{job_id}*-RUNNING"))
+                if matching_files:
+                    job_file_path = matching_files[0]
+                    break
+
+        if not job_file_path:
+            raise FileNotFoundError(f"RUNNING job not found for job_id: {job_id}")
+
+        # Rename to STALE
+        new_path = job_file_path.parent / job_file_path.name.replace("-RUNNING", "-STALE")
+        job_file_path.rename(new_path)
+
+        return JobStatusUpdateResponse(
+            job_id=job_id,
+            old_status="running",
+            new_status="stale",
+            message=f"Job {job_id} marked as stale"
+        )
+
+    async def mark_job_as_failed(self, job_id: str) -> JobStatusUpdateResponse:
+        """Mark a RUNNING or STALE job as FAILED.
+
+        Args:
+            job_id: Job identifier
+
+        Returns:
+            JobStatusUpdateResponse with status change details
+
+        Raises:
+            FileNotFoundError: If job not found
+            ValueError: If job is not in RUNNING or STALE state
+        """
+        # Sanitize job_id
+        if '..' in job_id or '/' in job_id or '\\' in job_id:
+            raise ValueError(f"Invalid job_id: {job_id}")
+
+        # Find RUNNING or STALE job
+        job_file_path = None
+        old_status = None
+
+        if self.spool_path.exists():
+            for grabber_spool in self.spool_path.glob("*"):
+                if not grabber_spool.is_dir():
+                    continue
+
+                # Check RUNNING first
+                matching_files = list(grabber_spool.glob(f"*{job_id}*-RUNNING"))
+                if matching_files:
+                    job_file_path = matching_files[0]
+                    old_status = "running"
+                    break
+
+                # Check STALE
+                matching_files = list(grabber_spool.glob(f"*{job_id}*-STALE"))
+                if matching_files:
+                    job_file_path = matching_files[0]
+                    old_status = "stale"
+                    break
+
+        if not job_file_path:
+            raise FileNotFoundError(f"RUNNING or STALE job not found for job_id: {job_id}")
+
+        # Rename to FAILED
+        suffix = "-RUNNING" if old_status == "running" else "-STALE"
+        new_path = job_file_path.parent / job_file_path.name.replace(suffix, "-FAILED")
+        job_file_path.rename(new_path)
+
+        return JobStatusUpdateResponse(
+            job_id=job_id,
+            old_status=old_status,
+            new_status="failed",
+            message=f"Job {job_id} marked as failed"
+        )
