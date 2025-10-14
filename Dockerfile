@@ -3,7 +3,12 @@ FROM python:3.12
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install script_grabber using uv
-RUN uv pip install --system --no-cache script-grabber
+# Copy source code
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+# Install script_grabber from local source
+RUN uv pip install --system --no-cache .
 
 ENTRYPOINT ["grabber"]

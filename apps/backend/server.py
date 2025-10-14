@@ -31,7 +31,7 @@ PORT = int(os.getenv("PORT", 8000))
 # Initialize FastAPI app
 app = FastAPI(
     title="ScriptGrabber API",
-    description="Job management API for distributed Python script execution",
+    description="Job management API for distributed executable file execution",
     version="0.1.0"
 )
 
@@ -73,21 +73,14 @@ async def health_check():
 
 @app.post("/api/jobs", response_model=JobSubmitResponse)
 async def submit_job(file: UploadFile = File(...)):
-    """Submit a Python script for execution.
+    """Submit an executable file for execution.
 
     Args:
-        file: Python script file (.py)
+        file: Executable file (any type)
 
     Returns:
         JobSubmitResponse with job_id and status
     """
-    # Validate file extension
-    if not file.filename or not file.filename.endswith('.py'):
-        raise HTTPException(
-            status_code=400,
-            detail="Only Python files (.py) are accepted"
-        )
-
     # Read file content
     content = await file.read()
 
@@ -96,15 +89,6 @@ async def submit_job(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=413,
             detail=f"File too large. Maximum size is {MAX_UPLOAD_SIZE} bytes"
-        )
-
-    # Validate content (basic check)
-    try:
-        content.decode('utf-8')
-    except UnicodeDecodeError:
-        raise HTTPException(
-            status_code=400,
-            detail="File must be valid UTF-8 text"
         )
 
     # Submit job

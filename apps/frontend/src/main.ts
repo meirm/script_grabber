@@ -80,11 +80,7 @@ function setupFileUpload() {
 async function handleFileUpload(file: File) {
   const statusDiv = document.getElementById('upload-status')!;
 
-  // Validate file
-  if (!file.name.endsWith('.py')) {
-    showMessage(statusDiv, 'error', 'Please select a Python (.py) file');
-    return;
-  }
+  // File upload - no type restrictions
 
   if (file.size > 10 * 1024 * 1024) {
     showMessage(statusDiv, 'error', 'File too large. Maximum size is 10MB');

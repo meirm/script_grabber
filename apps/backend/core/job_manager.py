@@ -53,12 +53,11 @@ class JobManager:
         return job_id
 
     def _sanitize_filename(self, filename: str) -> str:
-        """Sanitize filename to prevent path traversal."""
+        """Sanitize filename to prevent path traversal while preserving extension."""
         # Remove path separators and keep only safe characters
         safe = re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
-        # Remove extension and re-add .py
-        safe = safe.rsplit('.', 1)[0] if '.' in safe else safe
-        return f"{safe}.py"
+        # Preserve original extension
+        return safe
 
     async def get_job_status(self, job_id: str) -> JobStatus:
         """Get status of a specific job.
@@ -97,10 +96,10 @@ class JobManager:
                     job_file = job_files[0]
 
                     # Read logs if available
-                    log_base = self.log_path / f"{job_id}.py"
-                    stdout_file = log_base.with_suffix(".out")
-                    stderr_file = log_base.with_suffix(".err")
-                    log_file = log_base.with_suffix(".log")
+                    # Log files are named {job_id}.out/.err/.log
+                    stdout_file = self.log_path / f"{job_id}.out"
+                    stderr_file = self.log_path / f"{job_id}.err"
+                    log_file = self.log_path / f"{job_id}.log"
 
                     stdout_content = None
                     stderr_content = None
@@ -163,8 +162,8 @@ class JobManager:
                 except (ValueError, FileNotFoundError):
                     pass
 
-        # Count jobs in queue
-        jobs_queued = len(list(self.queue_path.glob("*.py")))
+        # Count jobs in queue (all files)
+        jobs_queued = len(list(self.queue_path.glob("*")))
 
         # Count jobs in various states across all spools
         jobs_running = 0
@@ -206,9 +205,9 @@ class JobManager:
         """
         all_jobs = []
 
-        # Get queued jobs
+        # Get queued jobs (all files)
         if not status_filter or status_filter == "queued":
-            for job_file in self.queue_path.glob("*.py"):
+            for job_file in self.queue_path.glob("*"):
                 all_jobs.append(JobListItem(
                     job_id=job_file.name,
                     status="queued",
