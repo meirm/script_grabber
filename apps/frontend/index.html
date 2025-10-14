@@ -769,6 +769,92 @@
         .stale-job-actions button {
           width: 100%;
         }
+
+        /* Timezone controls mobile adjustments */
+        header > div:first-child {
+          flex-direction: column !important;
+          align-items: stretch !important;
+        }
+
+        .timezone-controls {
+          margin-top: 15px;
+        }
+      }
+
+      /* Timezone Toggle Styles */
+      .timezone-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+      }
+
+      .timezone-indicator {
+        font-size: 0.9em;
+        color: #7f8c8d;
+        text-align: right;
+      }
+
+      .timezone-indicator strong {
+        color: #2c3e50;
+      }
+
+      .timezone-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+      }
+
+      .timezone-label {
+        font-size: 0.9em;
+        color: #2c3e50;
+        user-select: none;
+        cursor: pointer;
+      }
+
+      .timezone-switch-input {
+        display: none;
+      }
+
+      .timezone-slider {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+        background-color: #3498db;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .timezone-slider::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: white;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+
+      .timezone-switch-input:checked ~ .timezone-slider {
+        background-color: #9b59b6;
+      }
+
+      .timezone-switch-input:checked ~ .timezone-slider::after {
+        transform: translateX(26px);
+      }
+
+      .timezone-switch-input:focus ~ .timezone-slider {
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+      }
+
+      .timezone-switch-input:checked:focus ~ .timezone-slider {
+        box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.3);
       }
     </style>
   </head>
@@ -776,8 +862,23 @@
     <!-- Main View -->
     <div id="main-view" class="container">
       <header>
-        <h1>🚀 ScriptGrabber</h1>
-        <p>Distributed Executable File Execution</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+          <div>
+            <h1>🚀 ScriptGrabber</h1>
+            <p>Distributed Executable File Execution</p>
+          </div>
+          <div class="timezone-controls">
+            <div class="timezone-indicator" id="timezone-indicator">
+              Showing times in: <strong id="timezone-display">Local Time</strong>
+            </div>
+            <div class="timezone-toggle">
+              <label for="timezone-switch" class="timezone-label">Local Time</label>
+              <input type="checkbox" id="timezone-switch" class="timezone-switch-input" aria-label="Toggle between Local Time and UTC">
+              <span class="timezone-slider"></span>
+              <label for="timezone-switch" class="timezone-label">UTC</label>
+            </div>
+          </div>
+        </div>
 
         <div class="cluster-status" id="cluster-status">
           <div class="loading">Loading cluster status...</div>
