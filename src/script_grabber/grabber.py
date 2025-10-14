@@ -31,6 +31,15 @@ import time
 import signal
 # Import local modules here.
 from .grabexceptions import GrabLockError, GrabRerunError, GrabTaskNotFoundError
+from .uv_handler import (
+    detect_uv_script,
+    parse_uv_metadata,
+    create_uv_environment,
+    install_uv_dependencies,
+    execute_uv_script,
+    cleanup_uv_environment,
+    UvScriptError,
+)
 __author__ = "Meir Michanie"
 __email__ = "meirm@riunx.com"
 __version__ = "0.1.0"
@@ -210,53 +219,23 @@ class Grabber:
 
     def detect_execution_method(self, file_path: Path) -> tuple[list[str], str]:
         """
-        Detect how to execute a file based on extension and shebang.
+        Detect how to execute a file. Checks for uv scripts, otherwise uses direct execution.
 
         Returns:
             tuple: (command_list, execution_method_description)
-            - command_list: Command to execute (e.g., ['/bin/bash', 'file.sh'] or ['./file'])
+            - command_list: Command to execute
             - execution_method_description: String describing the execution method for logging
         """
-        # Try to read shebang first
+        # Check for uv single-file script first (requires special handling)
         try:
-            with open(file_path, 'rb') as f:
-                first_line = f.readline().decode('utf-8', errors='ignore').strip()
-                if first_line.startswith('#!'):
-                    # Parse shebang
-                    shebang = first_line[2:].strip()
-                    # Handle both direct paths and env-based shebangs
-                    if shebang.startswith('/usr/bin/env ') or shebang.startswith('/bin/env '):
-                        # Extract interpreter after 'env'
-                        parts = shebang.split()
-                        if len(parts) >= 2:
-                            interpreter = parts[1]
-                            return ([interpreter, str(file_path)], f"shebang env: {interpreter}")
-                    else:
-                        # Direct interpreter path
-                        interpreter = shebang.split()[0]  # Take first part before any args
-                        return ([interpreter, str(file_path)], f"shebang: {interpreter}")
+            if detect_uv_script(file_path):
+                return (["uv", str(file_path)], "uv single-file script")
         except Exception as e:
-            self.logger.warning(f"Failed to read shebang from {file_path}: {e}")
+            self.logger.debug(f"uv detection failed for {file_path}: {e}")
 
-        # Map common extensions to interpreters
-        extension_map = {
-            '.py': ('python3', 'Python interpreter'),
-            '.sh': ('/bin/bash', 'Bash shell'),
-            '.bash': ('/bin/bash', 'Bash shell'),
-            '.js': ('node', 'Node.js'),
-            '.rb': ('ruby', 'Ruby'),
-            '.pl': ('perl', 'Perl'),
-            '.php': ('php', 'PHP'),
-        }
-
-        ext = file_path.suffix.lower()
-        if ext in extension_map:
-            interpreter, desc = extension_map[ext]
-            return ([interpreter, str(file_path)], f"extension {ext}: {desc}")
-
-        # No shebang and no known extension - try direct execution
-        # File should already be executable from chmod +x at line 203
-        return ([str(file_path)], "direct execution (binary or unknown type)")
+        # For everything else, use direct execution and let the OS handle the shebang
+        # File is already executable from chmod +x at line 212
+        return ([str(file_path)], "direct execution")
 
     def run_job(self) -> None:
         # Convert running_job_path to a Path object
@@ -275,21 +254,132 @@ class Grabber:
             self.logger.error(f"Failed to detect execution method: {e}")
             return
 
-        # Execute the job
-        try:
-            process = subprocess.run(command_list,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        cwd=str(self.clusterpath))
-        except FileNotFoundError as e:
-            self.logger.error(f"Interpreter or file not found: {e}")
-            return
-        except PermissionError as e:
-            self.logger.error(f"Permission denied when executing {self.job_file}: {e}")
-            return
-        except OSError as e:
-            self.logger.error(f"OS error when executing {self.job_file}: {e}")
-            return
+        # Handle uv single-file scripts with special workflow
+        if method_description == "uv single-file script":
+            env_path = None
+            try:
+                # Parse metadata
+                self.logger.info(f"Parsing uv metadata from {self.job_file}")
+                metadata = parse_uv_metadata(self.running_job_path)
+                dependencies = metadata.get("dependencies", [])
+                self.logger.info(f"Found {len(dependencies)} dependencies: {dependencies}")
+
+                # Create job_id from job filename
+                job_id = self.job_file.replace(".", "_").replace("-", "_")
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                job_id = f"{job_id}_{timestamp}"
+
+                # Create isolated environment
+                self.logger.info(f"Creating uv environment for {job_id}")
+                env_path = create_uv_environment(job_id, Path(self.clusterpath) / "temp")
+
+                # Install dependencies
+                if dependencies:
+                    self.logger.info(f"Installing dependencies: {dependencies}")
+                    install_result = install_uv_dependencies(
+                        dependencies,
+                        env_path,
+                        timeout=300  # 5 minutes for installation
+                    )
+
+                    # Write installation log
+                    install_log_path = Path(self.spoollog) / f"{self.job_file}_uv_install.log"
+                    with open(str(install_log_path), "w") as f:
+                        f.write(f"=== uv Dependency Installation Log ===\n")
+                        f.write(f"Job: {self.job_file}\n")
+                        f.write(f"Dependencies: {dependencies}\n")
+                        f.write(f"Exit Code: {install_result.returncode}\n")
+                        f.write(f"\n=== Installation Output ===\n")
+                        f.write(install_result.stdout)
+                        if install_result.stderr:
+                            f.write(f"\n=== Installation Errors ===\n")
+                            f.write(install_result.stderr)
+
+                    self.logger.info("Dependencies installed successfully")
+                else:
+                    self.logger.info("No dependencies to install")
+
+                # Execute script within environment
+                self.logger.info(f"Executing script in uv environment")
+                process = execute_uv_script(
+                    self.running_job_path,
+                    env_path,
+                    Path(self.clusterpath),
+                    timeout=self.job_timeout
+                )
+
+            except subprocess.TimeoutExpired:
+                self.logger.warning(f"Script execution timed out after {self.job_timeout}s")
+                # Create a failed process result
+                process = subprocess.CompletedProcess(
+                    args=command_list,
+                    returncode=124,  # Timeout exit code
+                    stdout=b"",
+                    stderr=b"Script execution timed out\n"
+                )
+            except UvScriptError as e:
+                self.logger.error(f"uv script error: {e}")
+                # Create a failed process result
+                error_msg = f"uv script error: {e}\n"
+                process = subprocess.CompletedProcess(
+                    args=command_list,
+                    returncode=1,
+                    stdout=b"",
+                    stderr=error_msg.encode('utf-8')
+                )
+            except Exception as e:
+                self.logger.error(f"Unexpected error running uv script: {e}")
+                # Create a failed process result
+                error_msg = f"Unexpected error: {e}\n"
+                process = subprocess.CompletedProcess(
+                    args=command_list,
+                    returncode=1,
+                    stdout=b"",
+                    stderr=error_msg.encode('utf-8')
+                )
+            finally:
+                # Always clean up the environment
+                if env_path:
+                    self.logger.info(f"Cleaning up uv environment: {env_path}")
+                    cleanup_uv_environment(env_path)
+
+        else:
+            # Standard execution for non-uv scripts
+            try:
+                process = subprocess.run(command_list,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE,
+                                            cwd=str(self.clusterpath))
+            except (FileNotFoundError, PermissionError, OSError) as e:
+                # Direct execution failed, try extension-based fallback
+                self.logger.warning(f"Direct execution failed: {e}. Trying extension-based fallback.")
+
+                # Map common extensions to interpreters
+                extension_map = {
+                    '.py': 'python3',
+                    '.sh': '/bin/bash',
+                    '.bash': '/bin/bash',
+                    '.js': 'node',
+                    '.rb': 'ruby',
+                    '.pl': 'perl',
+                    '.php': 'php',
+                }
+
+                ext = self.running_job_path.suffix.lower()
+                if ext in extension_map:
+                    interpreter = extension_map[ext]
+                    self.logger.info(f"Retrying with {interpreter} interpreter based on extension {ext}")
+                    try:
+                        process = subprocess.run([interpreter, str(self.running_job_path)],
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE,
+                                                cwd=str(self.clusterpath))
+                    except Exception as retry_error:
+                        self.logger.error(f"Extension-based execution also failed: {retry_error}")
+                        return
+                else:
+                    self.logger.error(f"No fallback interpreter found for extension {ext}")
+                    return
 
         # Determine the appropriate destination for the job file based on the exit code
         done_job_path = str(self.running_job_path).replace("-RUNNING","-DONE")

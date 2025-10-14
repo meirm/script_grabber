@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "script-grabber"
-version = "0.1.4"
+version = "0.2.1"
 description = "A job queue management system for distributed computing."
 authors = [{name = "Meir Michanie", email = "meirm@riunx.com"}]
 license = {text = "MIT"}
