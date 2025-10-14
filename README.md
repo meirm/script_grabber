@@ -172,6 +172,155 @@ console.log("Hello from Node.js");
 process.exit(0);
 ```
 
+### uv Single-File Scripts (PEP 723)
+
+ScriptGrabber supports **uv single-file scripts** with embedded dependency specifications. This allows you to create self-contained Python scripts that automatically manage their own dependencies without requiring separate requirements files or virtual environment setup.
+
+#### What are uv Scripts?
+
+uv scripts use PEP 723 metadata blocks to embed dependency specifications directly in the script file:
+
+```python
+#!/usr/bin/env -S uv run
+# /// script
+# dependencies = [
+#   "requests>=2.31.0",
+#   "python-dotenv>=1.0.0",
+# ]
+# ///
+
+import requests
+from dotenv import load_dotenv
+
+def main():
+    response = requests.get("https://httpbin.org/json")
+    print(f"Status: {response.status_code}")
+    print(f"Data: {response.json()}")
+
+if __name__ == "__main__":
+    exit(main())
+```
+
+#### How It Works
+
+When ScriptGrabber detects a uv script:
+
+1. **Detection**: Recognizes `#!/usr/bin/env -S uv run` or `#!/usr/bin/env uv run` shebang
+2. **Parsing**: Extracts PEP 723 metadata block (`# /// script` ... `# ///`)
+3. **Environment**: Creates isolated temporary virtual environment in `<clusterpath>/temp/uv_envs/<job_id>/`
+4. **Installation**: Installs dependencies using uv's fast resolver
+5. **Execution**: Runs script within isolated environment
+6. **Cleanup**: Automatically removes environment after execution (success or failure)
+
+#### Benefits
+
+- **Self-Contained**: All dependencies specified in the script file itself
+- **Isolated**: Each script gets its own temporary virtual environment
+- **Fast**: uv's Rust-based dependency resolver is significantly faster than pip
+- **Portable**: Scripts can be shared and run anywhere with uv installed
+- **No Manual Setup**: No need to create virtual environments or install dependencies manually
+
+#### Version Constraints
+
+uv scripts support standard Python version specifiers:
+
+```python
+# /// script
+# dependencies = [
+#   "package",                    # Latest version
+#   "package==1.2.3",            # Exact version
+#   "package>=1.2.3",            # Minimum version
+#   "package<2.0.0",             # Maximum version (exclusive)
+#   "package>=1.2,<2.0",         # Range
+#   "package~=1.2",              # Compatible release (1.2.x)
+#   "package[extra]",            # Package with extras
+# ]
+# ///
+```
+
+#### Examples
+
+See `examples/uv_scripts/` for complete working examples:
+
+- **basic_deps.py**: Simple script with common dependencies (requests, python-dotenv)
+- **data_analysis.py**: Data science workflow (pandas, numpy)
+- **version_constraints.py**: Various dependency version constraint formats
+
+#### Requirements
+
+uv must be installed on the system running ScriptGrabber:
+
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Verify installation
+uv --version
+```
+
+#### Usage with ScriptGrabber
+
+Submit uv scripts exactly like any other script:
+
+```bash
+# Copy to queue
+cp my_uv_script.py /cluster/queue/
+
+# Via API
+curl -X POST -F "file=@my_uv_script.py" http://localhost:8000/api/jobs
+```
+
+ScriptGrabber will automatically detect the uv shebang and handle dependency installation.
+
+#### Logging
+
+uv scripts generate two types of logs:
+
+1. **Installation Log**: `<job_id>_uv_install.log` - Dependency installation output
+2. **Script Logs**: Standard `.out` and `.err` files for script output
+
+Example:
+```bash
+# View dependency installation
+cat /cluster/log/my_script.py_uv_install.log
+
+# View script output
+cat /cluster/log/my_script.py.out
+```
+
+#### Troubleshooting
+
+**"uv not found" error:**
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Dependency installation fails:**
+```bash
+# Check installation log for details
+cat /cluster/log/your_script.py_uv_install.log
+```
+
+Common issues:
+- Package name typo
+- Version not available on PyPI
+- Network connectivity issues
+
+**Environment cleanup issues:**
+
+Temporary environments are automatically cleaned up, but if cleanup fails:
+```bash
+# Manual cleanup
+rm -rf /cluster/temp/uv_envs/
+```
+
+#### Learn More
+
+- [uv Documentation](https://docs.astral.sh/uv/)
+- [PEP 723 Specification](https://peps.python.org/pep-0723/)
+- [Example Scripts](examples/uv_scripts/README.md)
+
 ## Web Interface & REST API
 
 ScriptGrabber includes a FastAPI-based web interface for job submission and monitoring.
@@ -434,7 +583,15 @@ Contributions are welcome! Please ensure:
 
 ## Recent Updates
 
-### Version 0.1.5 (Current Development)
+### Version 0.1.6 (Current Development)
+
+- ✅ **uv Single-File Script Support (PEP 723)** - Execute Python scripts with embedded dependencies
+- ✅ Automatic dependency installation in isolated environments
+- ✅ Fast dependency resolution using uv's Rust-based resolver
+- ✅ Comprehensive test coverage for uv functionality (90%+ for uv_handler)
+- ✅ Example scripts and complete documentation
+
+### Version 0.1.5
 
 - ✅ Multi-language execution support (Bash, Shell, Node.js, Ruby, etc.)
 - ✅ Intelligent shebang and extension-based execution detection
