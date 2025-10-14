@@ -1,7 +1,7 @@
 # ScriptGrabber
 ScriptGrabber is a Python script that implements a simple polling mechanism to grab python scripts from a source system and execute it. The script is designed to be run as a standalone process and can be controlled using Unix signals.
 
-![Web Interface Screenshot](web_interface.png)
+![Web Interface Screenshot](web_interface1.png)
 
 ## Getting started
 
