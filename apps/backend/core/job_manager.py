@@ -96,12 +96,10 @@ class JobManager:
                     job_file = job_files[0]
 
                     # Read logs if available
-                    # Remove any extension from job_id to get base name for logs
-                    job_base = job_id.rsplit('.', 1)[0] if '.' in job_id else job_id
-                    log_base = self.log_path / job_base
-                    stdout_file = log_base.with_suffix(".out")
-                    stderr_file = log_base.with_suffix(".err")
-                    log_file = log_base.with_suffix(".log")
+                    # Log files are named {job_id}.out/.err/.log
+                    stdout_file = self.log_path / f"{job_id}.out"
+                    stderr_file = self.log_path / f"{job_id}.err"
+                    log_file = self.log_path / f"{job_id}.log"
 
                     stdout_content = None
                     stderr_content = None
