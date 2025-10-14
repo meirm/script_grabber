@@ -219,63 +219,23 @@ class Grabber:
 
     def detect_execution_method(self, file_path: Path) -> tuple[list[str], str]:
         """
-        Detect how to execute a file based on extension and shebang.
-
-        Checks for uv single-file scripts first, then falls back to standard detection.
+        Detect how to execute a file. Checks for uv scripts, otherwise uses direct execution.
 
         Returns:
             tuple: (command_list, execution_method_description)
-            - command_list: Command to execute (e.g., ['/bin/bash', 'file.sh'] or ['./file'])
-                           For uv scripts: ["uv", str(file_path)]
+            - command_list: Command to execute
             - execution_method_description: String describing the execution method for logging
         """
-        # Check for uv single-file script first (priority detection)
+        # Check for uv single-file script first (requires special handling)
         try:
             if detect_uv_script(file_path):
                 return (["uv", str(file_path)], "uv single-file script")
         except Exception as e:
             self.logger.debug(f"uv detection failed for {file_path}: {e}")
 
-        # Try to read shebang first
-        try:
-            with open(file_path, 'rb') as f:
-                first_line = f.readline().decode('utf-8', errors='ignore').strip()
-                if first_line.startswith('#!'):
-                    # Parse shebang
-                    shebang = first_line[2:].strip()
-                    # Handle both direct paths and env-based shebangs
-                    if shebang.startswith('/usr/bin/env ') or shebang.startswith('/bin/env '):
-                        # Extract interpreter after 'env'
-                        parts = shebang.split()
-                        if len(parts) >= 2:
-                            interpreter = parts[1]
-                            return ([interpreter, str(file_path)], f"shebang env: {interpreter}")
-                    else:
-                        # Direct interpreter path
-                        interpreter = shebang.split()[0]  # Take first part before any args
-                        return ([interpreter, str(file_path)], f"shebang: {interpreter}")
-        except Exception as e:
-            self.logger.warning(f"Failed to read shebang from {file_path}: {e}")
-
-        # Map common extensions to interpreters
-        extension_map = {
-            '.py': ('python3', 'Python interpreter'),
-            '.sh': ('/bin/bash', 'Bash shell'),
-            '.bash': ('/bin/bash', 'Bash shell'),
-            '.js': ('node', 'Node.js'),
-            '.rb': ('ruby', 'Ruby'),
-            '.pl': ('perl', 'Perl'),
-            '.php': ('php', 'PHP'),
-        }
-
-        ext = file_path.suffix.lower()
-        if ext in extension_map:
-            interpreter, desc = extension_map[ext]
-            return ([interpreter, str(file_path)], f"extension {ext}: {desc}")
-
-        # No shebang and no known extension - try direct execution
-        # File should already be executable from chmod +x at line 203
-        return ([str(file_path)], "direct execution (binary or unknown type)")
+        # For everything else, use direct execution and let the OS handle the shebang
+        # File is already executable from chmod +x at line 212
+        return ([str(file_path)], "direct execution")
 
     def run_job(self) -> None:
         # Convert running_job_path to a Path object
@@ -390,15 +350,36 @@ class Grabber:
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE,
                                             cwd=str(self.clusterpath))
-            except FileNotFoundError as e:
-                self.logger.error(f"Interpreter or file not found: {e}")
-                return
-            except PermissionError as e:
-                self.logger.error(f"Permission denied when executing {self.job_file}: {e}")
-                return
-            except OSError as e:
-                self.logger.error(f"OS error when executing {self.job_file}: {e}")
-                return
+            except (FileNotFoundError, PermissionError, OSError) as e:
+                # Direct execution failed, try extension-based fallback
+                self.logger.warning(f"Direct execution failed: {e}. Trying extension-based fallback.")
+
+                # Map common extensions to interpreters
+                extension_map = {
+                    '.py': 'python3',
+                    '.sh': '/bin/bash',
+                    '.bash': '/bin/bash',
+                    '.js': 'node',
+                    '.rb': 'ruby',
+                    '.pl': 'perl',
+                    '.php': 'php',
+                }
+
+                ext = self.running_job_path.suffix.lower()
+                if ext in extension_map:
+                    interpreter = extension_map[ext]
+                    self.logger.info(f"Retrying with {interpreter} interpreter based on extension {ext}")
+                    try:
+                        process = subprocess.run([interpreter, str(self.running_job_path)],
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE,
+                                                cwd=str(self.clusterpath))
+                    except Exception as retry_error:
+                        self.logger.error(f"Extension-based execution also failed: {retry_error}")
+                        return
+                else:
+                    self.logger.error(f"No fallback interpreter found for extension {ext}")
+                    return
 
         # Determine the appropriate destination for the job file based on the exit code
         done_job_path = str(self.running_job_path).replace("-RUNNING","-DONE")

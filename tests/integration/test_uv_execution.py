@@ -172,8 +172,8 @@ sys.exit(0)
             result = execute_uv_script(script_file, env_path, tmp_path, timeout=30)
 
             assert result.returncode == 0
-            assert "Certifi version:" in result.stdout
-            assert "Script executed successfully" in result.stdout
+            assert b"Certifi version:" in result.stdout
+            assert b"Script executed successfully" in result.stdout
 
         finally:
             cleanup_uv_environment(env_path)
@@ -252,7 +252,7 @@ print("OK")
             # Step 5: Execute script
             result = execute_uv_script(simple_script, env_path, tmp_path, timeout=30)
             assert result.returncode == 0
-            assert "OK" in result.stdout
+            assert b"OK" in result.stdout
 
         finally:
             # Step 6: Cleanup

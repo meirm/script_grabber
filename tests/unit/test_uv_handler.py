@@ -288,14 +288,14 @@ class TestExecuteUvScript:
 
         mock_run.return_value = Mock(
             returncode=0,
-            stdout="Hello\n",
-            stderr=""
+            stdout=b"Hello\n",  # Return bytes instead of string
+            stderr=b""
         )
 
         result = execute_uv_script(script_file, env_path, tmp_path, timeout=60)
 
         assert result.returncode == 0
-        assert "Hello" in result.stdout
+        assert b"Hello" in result.stdout
 
     @patch('subprocess.run')
     def test_execute_script_timeout(self, mock_run, tmp_path):

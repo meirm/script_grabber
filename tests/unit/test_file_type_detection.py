@@ -24,81 +24,76 @@ class TestFileTypeDetection:
     """Test file type detection logic."""
 
     def test_detect_shebang_bash(self, grabber, temp_cluster):
-        """Test detection of bash shebang."""
+        """Test detection of bash shebang (direct execution, OS handles shebang)."""
         test_file = temp_cluster / "test.sh"
         test_file.write_text("#!/bin/bash\necho 'test'\n")
 
         command, description = grabber.detect_execution_method(test_file)
 
-        assert command == ["/bin/bash", str(test_file)]
-        assert "shebang" in description
-        assert "/bin/bash" in description
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_detect_shebang_env_python(self, grabber, temp_cluster):
-        """Test detection of env-based Python shebang."""
+        """Test detection of env-based Python shebang (direct execution, OS handles shebang)."""
         test_file = temp_cluster / "test.py"
         test_file.write_text("#!/usr/bin/env python3\nprint('test')\n")
 
         command, description = grabber.detect_execution_method(test_file)
 
-        assert command == ["python3", str(test_file)]
-        assert "shebang env" in description
-        assert "python3" in description
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_detect_shebang_env_node(self, grabber, temp_cluster):
-        """Test detection of env-based Node.js shebang."""
+        """Test detection of env-based Node.js shebang (direct execution, OS handles shebang)."""
         test_file = temp_cluster / "test.js"
         test_file.write_text("#!/usr/bin/env node\nconsole.log('test');\n")
 
         command, description = grabber.detect_execution_method(test_file)
 
-        assert command == ["node", str(test_file)]
-        assert "shebang env" in description
-        assert "node" in description
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_detect_extension_python(self, grabber, temp_cluster):
-        """Test detection of Python by .py extension."""
+        """Test detection defaults to direct execution (extension fallback happens at runtime)."""
         test_file = temp_cluster / "test.py"
         test_file.write_text("print('test')\n")  # No shebang
 
         command, description = grabber.detect_execution_method(test_file)
 
-        assert command == ["python3", str(test_file)]
-        assert "extension .py" in description
-        assert "Python interpreter" in description
+        # Detection phase just returns direct execution
+        # Extension fallback happens during run_job() if direct execution fails
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_detect_extension_shell(self, grabber, temp_cluster):
-        """Test detection of shell by .sh extension."""
+        """Test detection defaults to direct execution (extension fallback happens at runtime)."""
         test_file = temp_cluster / "test.sh"
         test_file.write_text("echo 'test'\n")  # No shebang
 
         command, description = grabber.detect_execution_method(test_file)
 
-        assert command == ["/bin/bash", str(test_file)]
-        assert "extension .sh" in description
-        assert "Bash shell" in description
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_detect_extension_javascript(self, grabber, temp_cluster):
-        """Test detection of Node.js by .js extension."""
+        """Test detection defaults to direct execution (extension fallback happens at runtime)."""
         test_file = temp_cluster / "test.js"
         test_file.write_text("console.log('test');\n")  # No shebang
 
         command, description = grabber.detect_execution_method(test_file)
 
-        assert command == ["node", str(test_file)]
-        assert "extension .js" in description
-        assert "Node.js" in description
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_detect_extension_ruby(self, grabber, temp_cluster):
-        """Test detection of Ruby by .rb extension."""
+        """Test detection defaults to direct execution (extension fallback happens at runtime)."""
         test_file = temp_cluster / "test.rb"
         test_file.write_text("puts 'test'\n")  # No shebang
 
         command, description = grabber.detect_execution_method(test_file)
 
-        assert command == ["ruby", str(test_file)]
-        assert "extension .rb" in description
-        assert "Ruby" in description
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_detect_no_extension(self, grabber, temp_cluster):
         """Test handling of files without extension (binary)."""
@@ -121,16 +116,15 @@ class TestFileTypeDetection:
         assert "direct execution" in description
 
     def test_shebang_with_args(self, grabber, temp_cluster):
-        """Test shebang with additional arguments."""
+        """Test shebang with additional arguments (OS handles arguments)."""
         test_file = temp_cluster / "test.py"
         test_file.write_text("#!/usr/bin/python3 -u\nprint('test')\n")
 
         command, description = grabber.detect_execution_method(test_file)
 
-        # Should extract just the interpreter path
-        assert command[0] == "/usr/bin/python3"
-        assert command[1] == str(test_file)
-        assert "shebang" in description
+        # Direct execution - OS will parse shebang and arguments
+        assert command == [str(test_file)]
+        assert "direct execution" in description
 
     def test_shebang_read_error_fallback(self, grabber, temp_cluster):
         """Test fallback to extension when shebang read fails."""
@@ -160,14 +154,13 @@ class TestFileTypeDetection:
         assert "direct execution" in description
 
     def test_shebang_priority_over_extension(self, grabber, temp_cluster):
-        """Test that shebang takes priority over extension."""
+        """Test that OS handles shebang priority (we just use direct execution)."""
         test_file = temp_cluster / "test.sh"
         # Has .sh extension but Python shebang
         test_file.write_text("#!/usr/bin/env python3\nprint('test')\n")
 
         command, description = grabber.detect_execution_method(test_file)
 
-        # Should use shebang (python3) not extension (bash)
-        assert command == ["python3", str(test_file)]
-        assert "shebang env" in description
-        assert "python3" in description
+        # Direct execution - OS will honor the shebang over the extension
+        assert command == [str(test_file)]
+        assert "direct execution" in description

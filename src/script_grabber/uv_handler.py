@@ -431,16 +431,16 @@ def execute_uv_script(
             cmd,
             cwd=str(cwd),
             capture_output=True,
-            text=True,
+            text=False,  # Return bytes to match standard execution
             timeout=timeout
         )
 
         logger.info(
             f"Script execution completed: exit code {result.returncode}"
         )
-        logger.debug(f"Script stdout:\n{result.stdout}")
+        logger.debug(f"Script stdout:\n{result.stdout.decode('utf-8', errors='replace')}")
         if result.stderr:
-            logger.debug(f"Script stderr:\n{result.stderr}")
+            logger.debug(f"Script stderr:\n{result.stderr.decode('utf-8', errors='replace')}")
 
         return result
 
